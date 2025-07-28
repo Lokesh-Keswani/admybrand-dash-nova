@@ -27,7 +27,7 @@ const App = () => (
               <Navbar />
               <div className="flex w-full">
                 <AppSidebar />
-                <main className="flex-1">
+                <main className="flex-1 pt-4">
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/reports" element={<Reports />} />
