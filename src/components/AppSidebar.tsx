@@ -29,8 +29,8 @@ export function AppSidebar() {
     path === "/" ? currentPath === "/" : currentPath.startsWith(path)
 
   return (
-    <Sidebar className="border-r border-glass-border">
-      <SidebarContent className="bg-sidebar/50 backdrop-blur-md">
+    <Sidebar className="border-r border-glass-border bg-sidebar/95 backdrop-blur-xl">
+      <SidebarContent className="bg-gradient-surface/90">
         <SidebarGroup>
           <SidebarGroupLabel className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Navigation
