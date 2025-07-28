@@ -5,7 +5,7 @@ import { BarChart3 } from "lucide-react"
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-glass-border bg-glass/50 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-glass-border bg-background/95 backdrop-blur-xl">
       <div className="flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="lg:hidden" />
