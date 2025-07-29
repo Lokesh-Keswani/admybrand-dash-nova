@@ -1,5 +1,6 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { webSocketService } from '@/services/websocket';
 
 interface TrafficSourceDataPoint {
   source: string;
@@ -24,21 +25,105 @@ const defaultData: TrafficSourceDataPoint[] = [
 
 export function TrafficSourcesChart({ data = defaultData, height = 200 }: TrafficSourcesChartProps) {
   const [chartData, setChartData] = useState<TrafficSourceDataPoint[]>(data);
+  const [initialized, setInitialized] = useState(false);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastUpdateRef = useRef<number>(0);
 
-  // Simulate occasional data updates
+  // Debounced update function to prevent flickering
+  const debouncedUpdate = useCallback((newData: TrafficSourceDataPoint[]) => {
+    const now = Date.now();
+    
+    // Prevent updates more frequent than 3 seconds to reduce flickering
+    if (now - lastUpdateRef.current < 3000) {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+      
+      updateTimeoutRef.current = setTimeout(() => {
+        setChartData(newData);
+        lastUpdateRef.current = Date.now();
+      }, 1000);
+      return;
+    }
+    
+    setChartData(newData);
+    lastUpdateRef.current = now;
+  }, []);
+
+  useEffect(() => {
+    // Listen for initial data to get current backend state
+    const unsubscribeInitial = webSocketService.on('initial-data', (initialData) => {
+      if (initialData.metrics?.pageViews && !initialized) {
+        // Scale traffic data based on current backend metrics
+        const scaleFactor = initialData.metrics.pageViews / 45678; // Original total
+        const updatedData = chartData.map(item => ({
+          ...item,
+          sessions: Math.floor(item.sessions * scaleFactor),
+          // Percentages stay relative
+        }));
+        debouncedUpdate(updatedData);
+        setInitialized(true);
+      }
+    });
+
+    return () => {
+      unsubscribeInitial();
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, [initialized, debouncedUpdate, chartData]);
+
+  // Smooth real-time data updates
   useEffect(() => {
     const interval = setInterval(() => {
-      setChartData(prev => 
-        prev.map(item => ({
+      // Calculate realistic incremental changes
+      const totalSessions = chartData.reduce((sum, item) => sum + item.sessions, 0);
+      
+      const updatedData = chartData.map((item, index) => {
+        // Different sources have different growth patterns (smaller changes)
+        let sessionChange = 0;
+        switch(item.source) {
+          case 'Organic Search':
+            sessionChange = Math.floor(Math.random() * 4 + 1); // 1-4 new sessions
+            break;
+          case 'Direct':
+            sessionChange = Math.floor(Math.random() * 3 + 1); // 1-3 new sessions
+            break;
+          case 'Social Media':
+            sessionChange = Math.floor(Math.random() * 3 + 1); // 1-3 new sessions
+            break;
+          case 'Email':
+            sessionChange = Math.floor(Math.random() * 2 + 1); // 1-2 new sessions
+            break;
+          case 'Referral':
+            sessionChange = Math.random() > 0.8 ? Math.floor(Math.random() * 2 + 1) : 0; // Occasional 1-2
+            break;
+          default:
+            sessionChange = Math.floor(Math.random() * 2);
+        }
+        
+        const newSessions = item.sessions + sessionChange;
+        const newTotal = totalSessions + sessionChange;
+        const newPercentage = (newSessions / newTotal) * 100;
+        
+        return {
           ...item,
-          sessions: item.sessions + Math.floor(Math.random() * 10) - 5,
-          percentage: Math.max(1, item.percentage + (Math.random() - 0.5) * 0.5)
-        }))
-      );
-    }, 45000); // Update every 45 seconds
+          sessions: newSessions,
+          percentage: Math.round(newPercentage * 10) / 10 // Round to 1 decimal
+        };
+      });
+      
+      debouncedUpdate(updatedData);
+    }, 8000); // Update every 8 seconds for smoother feel
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearInterval(interval);
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, [debouncedUpdate, chartData]);
 
   const formatTooltip = (value: number, name: string) => {
     if (name === 'sessions') {
@@ -71,41 +156,48 @@ export function TrafficSourcesChart({ data = defaultData, height = 200 }: Traffi
   };
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <PieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={renderCustomizedLabel}
-          outerRadius={60}
-          fill="#8884d8"
-          dataKey="sessions"
-        >
-          {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip 
-          formatter={formatTooltip}
-          contentStyle={{
-            backgroundColor: 'hsl(var(--background))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '6px',
-            fontSize: '12px'
-          }}
-        />
-        <Legend 
-          verticalAlign="bottom" 
-          height={36}
-          formatter={(value, entry) => (
-            <span style={{ color: entry.color, fontSize: '12px' }}>
-              {value}
-            </span>
-          )}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="transition-all duration-500 ease-in-out">
+      <ResponsiveContainer width="100%" height={height}>
+        <PieChart>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={renderCustomizedLabel}
+            outerRadius={60}
+            fill="#8884d8"
+            dataKey="sessions"
+            animationDuration={1200}
+            animationEasing="ease-in-out"
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip 
+            formatter={formatTooltip}
+            contentStyle={{
+              backgroundColor: 'hsl(var(--background))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '8px',
+              fontSize: '12px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s ease-in-out'
+            }}
+            animationDuration={200}
+          />
+          <Legend 
+            verticalAlign="bottom" 
+            height={36}
+            formatter={(value, entry) => (
+              <span style={{ color: entry.color, fontSize: '12px' }}>
+                {value}
+              </span>
+            )}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 } 

@@ -11,8 +11,10 @@ class WebSocketService {
   private subscribers: Map<string, Array<(data: any) => void>> = new Map();
 
   constructor() {
-    // Disable auto-connect to prevent errors when backend is not available
-    // this.connect();
+    // Auto-connect when service is created to maintain persistent connection
+    setTimeout(() => {
+      this.connect();
+    }, 1000); // Small delay to allow backend to start
   }
 
   // Connect to WebSocket server

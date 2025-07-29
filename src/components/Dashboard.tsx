@@ -10,7 +10,10 @@ import { RevenueChart } from "@/components/charts/RevenueChart"
 import { ConversionsChart } from "@/components/charts/ConversionsChart"
 import { TrafficSourcesChart } from "@/components/charts/TrafficSourcesChart"
 
-// Sample fallback data
+// Global persistent metrics to prevent reset flicker
+let globalMetrics: Metrics | null = null;
+
+// Sample fallback data (only used if no global data exists)
 const sampleMetrics: Metrics = {
   totalRevenue: {
     value: "$124,580",
@@ -80,7 +83,7 @@ const sampleCampaigns: Campaign[] = [
 ];
 
 export function Dashboard() {
-  const [metrics, setMetrics] = useState<Metrics | null>(sampleMetrics);
+  const [metrics, setMetrics] = useState<Metrics | null>(globalMetrics || sampleMetrics);
   const [campaigns, setCampaigns] = useState<Campaign[]>(sampleCampaigns);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,53 +91,97 @@ export function Dashboard() {
   
   const { isConnected, subscribe, on, service } = useWebSocket();
 
-  // Auto-connect to WebSocket on component mount
+  // Auto-connect to WebSocket on component mount and keep connection alive
   useEffect(() => {
     if (!isConnected) {
       service.connect();
     }
+    // Don't disconnect on unmount to preserve connection across navigation
   }, [isConnected, service]);
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates and get initial state
   useEffect(() => {
+    // Force connection if not connected
+    if (!isConnected) {
+      service.connect();
+    }
+    
     if (isConnected) {
       subscribe('metrics');
+      
+      // Listen for initial data to get current backend state
+      const unsubscribeInitial = on('initial-data', (initialData) => {
+        if (initialData.metrics) {
+          const newMetrics = {
+            totalRevenue: {
+              value: `$${initialData.metrics.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+              change: "+20.1%",
+              changeType: "positive" as const,
+              raw: initialData.metrics.totalRevenue
+            },
+            activeUsers: {
+              value: initialData.metrics.activeUsers.toLocaleString(),
+              change: "+15.3%",
+              changeType: "positive" as const,
+              raw: initialData.metrics.activeUsers
+            },
+            conversions: {
+              value: `${initialData.metrics.conversionRate.toFixed(1)}%`,
+              change: "+2.1%",
+              changeType: "positive" as const,
+              raw: initialData.metrics.conversionRate
+            },
+            growthRate: {
+              value: `${initialData.metrics.growthRate.toFixed(1)}%`,
+              change: initialData.metrics.growthRate > 8 ? "+0.5%" : "-0.5%",
+              changeType: (initialData.metrics.growthRate > 8 ? "positive" : "negative") as "positive" | "negative",
+              raw: initialData.metrics.growthRate
+            }
+          };
+          setMetrics(newMetrics);
+          globalMetrics = newMetrics; // Persist to global state
+          setLastUpdated(initialData.timestamp);
+        }
+      });
       
       // Listen for real-time updates
       const unsubscribeMetrics = on('real-time-update', (data) => {
         if (data.metrics) {
-          setMetrics({
+          const newMetrics = {
             totalRevenue: {
               value: `$${data.metrics.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
               change: "+20.1%",
-              changeType: "positive",
+              changeType: "positive" as const,
               raw: data.metrics.totalRevenue
             },
             activeUsers: {
               value: data.metrics.activeUsers.toLocaleString(),
               change: "+15.3%",
-              changeType: "positive",
+              changeType: "positive" as const,
               raw: data.metrics.activeUsers
             },
             conversions: {
               value: `${data.metrics.conversionRate.toFixed(1)}%`,
               change: "+2.1%",
-              changeType: "positive",
+              changeType: "positive" as const,
               raw: data.metrics.conversionRate
             },
             growthRate: {
               value: `${data.metrics.growthRate.toFixed(1)}%`,
               change: data.metrics.growthRate > 8 ? "+0.5%" : "-0.5%",
-              changeType: data.metrics.growthRate > 8 ? "positive" : "negative",
+              changeType: (data.metrics.growthRate > 8 ? "positive" : "negative") as "positive" | "negative",
               raw: data.metrics.growthRate
             }
-          });
+          };
+          setMetrics(newMetrics);
+          globalMetrics = newMetrics; // Persist to global state
           setLastUpdated(data.timestamp);
         }
       });
 
       return () => {
         unsubscribeMetrics();
+        unsubscribeInitial();
       };
     }
   }, [isConnected, subscribe, on]);
@@ -213,15 +260,27 @@ export function Dashboard() {
             Welcome back! Here's an overview of your campaign performance.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
           {isConnected ? (
-            <><Wifi className="h-4 w-4 text-green-500" /> Live Updates</>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <Wifi className="h-4 w-4 text-green-500" />
+                <span className="text-green-600 font-medium">Live Updates</span>
+              </div>
+              <span className="text-xs bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
+                Updating every 3s
+              </span>
+            </div>
           ) : (
-            <><WifiOff className="h-4 w-4 text-red-500" /> Offline</>
+            <div className="flex items-center gap-1">
+              <WifiOff className="h-4 w-4 text-red-500" />
+              <span className="text-red-600">Offline</span>
+            </div>
           )}
           {lastUpdated && (
-            <span className="ml-2">
-              Last updated: {new Date(lastUpdated).toLocaleTimeString()}
+            <span className="text-xs">
+              Last: {new Date(lastUpdated).toLocaleTimeString()}
             </span>
           )}
         </div>
