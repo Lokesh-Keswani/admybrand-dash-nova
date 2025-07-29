@@ -3,8 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { BarChart3, TrendingUp, Users, Globe, Smartphone, Monitor, Tablet } from "lucide-react"
+import { BarChart3, TrendingUp, Users, Globe, Smartphone, Monitor, Tablet, Activity, Target, DollarSign } from "lucide-react"
 import { analyticsAPI, reportsAPI } from "@/services/api"
+import { RevenueGrowthChart, UserEngagementChart, ConversionFunnelChart, PerformanceMetricsChart } from "@/components/charts/AnalyticsCharts"
 
 // Sample analytics data
 const sampleTrafficSources = [
@@ -116,13 +117,84 @@ export default function Analytics() {
         </Card>
       )}
 
-      <Tabs defaultValue="traffic" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="traffic">Traffic Sources</TabsTrigger>
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="traffic">Traffic</TabsTrigger>
           <TabsTrigger value="audience">Audience</TabsTrigger>
           <TabsTrigger value="behavior">Behavior</TabsTrigger>
           <TabsTrigger value="conversions">Conversions</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Revenue Growth Chart */}
+            <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Revenue Growth Trend
+                </CardTitle>
+                <CardDescription>
+                  30-day revenue performance with growth indicators
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RevenueGrowthChart height={250} />
+              </CardContent>
+            </Card>
+
+            {/* User Engagement Chart */}
+            <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  User Engagement Metrics
+                </CardTitle>
+                <CardDescription>
+                  Key engagement indicators and performance metrics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UserEngagementChart height={250} />
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Performance Metrics Chart */}
+            <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Performance Metrics
+                </CardTitle>
+                <CardDescription>
+                  CTR, ROAS, and impression trends over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PerformanceMetricsChart height={250} />
+              </CardContent>
+            </Card>
+
+            {/* Conversion Funnel Chart */}
+            <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Conversion Funnel Analysis
+                </CardTitle>
+                <CardDescription>
+                  User journey from visitors to customers
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ConversionFunnelChart height={250} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="traffic" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">

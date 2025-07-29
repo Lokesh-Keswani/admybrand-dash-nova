@@ -6,6 +6,9 @@ import { useEffect, useState } from "react"
 import { analyticsAPI, campaignsAPI, Metrics, Campaign } from "@/services/api"
 import { useWebSocket } from "@/services/websocket"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { RevenueChart } from "@/components/charts/RevenueChart"
+import { ConversionsChart } from "@/components/charts/ConversionsChart"
+import { TrafficSourcesChart } from "@/components/charts/TrafficSourcesChart"
 
 // Sample fallback data
 const sampleMetrics: Metrics = {
@@ -83,12 +86,14 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   
-  const { isConnected, subscribe, on } = useWebSocket();
+  const { isConnected, subscribe, on, service } = useWebSocket();
 
-  // Load initial data (disabled to prevent aggressive retries)
-  // useEffect(() => {
-  //   loadDashboardData();
-  // }, []);
+  // Auto-connect to WebSocket on component mount
+  useEffect(() => {
+    if (!isConnected) {
+      service.connect();
+    }
+  }, [isConnected, service]);
 
   // Subscribe to real-time updates
   useEffect(() => {
@@ -267,13 +272,7 @@ export function Dashboard() {
             <CardDescription>Monthly revenue over the last 6 months</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex items-center justify-center border-2 border-dashed border-glass-border rounded-lg">
-              <div className="text-center text-muted-foreground">
-                <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Line Chart Placeholder</p>
-                <p className="text-xs">Revenue trends visualization</p>
-              </div>
-            </div>
+            <RevenueChart height={200} />
           </CardContent>
         </Card>
 
@@ -286,13 +285,7 @@ export function Dashboard() {
             <CardDescription>Conversions by campaign type</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex items-center justify-center border-2 border-dashed border-glass-border rounded-lg">
-              <div className="text-center text-muted-foreground">
-                <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Bar Chart Placeholder</p>
-                <p className="text-xs">Campaign conversion data</p>
-              </div>
-            </div>
+            <ConversionsChart height={200} />
           </CardContent>
         </Card>
 
@@ -305,13 +298,7 @@ export function Dashboard() {
             <CardDescription>Traffic distribution by source</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex items-center justify-center border-2 border-dashed border-glass-border rounded-lg">
-              <div className="text-center text-muted-foreground">
-                <PieChart className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Pie Chart Placeholder</p>
-                <p className="text-xs">Traffic source breakdown</p>
-              </div>
-            </div>
+            <TrafficSourcesChart height={200} />
           </CardContent>
         </Card>
       </div>
