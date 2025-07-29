@@ -1,7 +1,8 @@
 import { MetricCard } from "@/components/MetricCard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DollarSign, Users, Target, TrendingUp, BarChart3, PieChart, Wifi, WifiOff } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { DollarSign, Users, Target, TrendingUp, BarChart3, PieChart, Wifi, WifiOff, RefreshCw } from "lucide-react"
 import { useEffect, useState } from "react"
 import { analyticsAPI, campaignsAPI, Metrics, Campaign } from "@/services/api"
 import { useWebSocket } from "@/services/websocket"
@@ -88,8 +89,29 @@ export function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('disconnected');
   
   const { isConnected, subscribe, on, service } = useWebSocket();
+
+  // Update connection status based on isConnected
+  useEffect(() => {
+    setConnectionStatus(isConnected ? 'connected' : 'disconnected');
+  }, [isConnected]);
+
+  // Listen for connection status events
+  useEffect(() => {
+    const unsubscribeConnection = on('connection', (data: any) => {
+      if (data.status === 'reconnecting') {
+        setConnectionStatus('reconnecting');
+      } else if (data.status === 'connected' || data.status === 'reconnected') {
+        setConnectionStatus('connected');
+      } else if (data.status === 'disconnected' || data.status === 'error') {
+        setConnectionStatus('disconnected');
+      }
+    });
+
+    return unsubscribeConnection;
+  }, [on]);
 
   // Auto-connect to WebSocket on component mount and keep connection alive
   useEffect(() => {
@@ -106,7 +128,7 @@ export function Dashboard() {
       service.connect();
     }
     
-    if (isConnected) {
+    if (connectionStatus === 'connected') {
       subscribe('metrics');
       
       // Listen for initial data to get current backend state
@@ -184,7 +206,7 @@ export function Dashboard() {
         unsubscribeInitial();
       };
     }
-  }, [isConnected, subscribe, on]);
+  }, [connectionStatus, isConnected, subscribe, on, service]);
 
   const loadDashboardData = async () => {
     try {
@@ -261,7 +283,7 @@ export function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          {isConnected ? (
+          {connectionStatus === 'connected' ? (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -272,10 +294,28 @@ export function Dashboard() {
                 Updating every 3s
               </span>
             </div>
+          ) : connectionStatus === 'reconnecting' ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <RefreshCw className="h-4 w-4 text-yellow-500 animate-spin" />
+                <span className="text-yellow-600">Reconnecting...</span>
+              </div>
+            </div>
           ) : (
-            <div className="flex items-center gap-1">
-              <WifiOff className="h-4 w-4 text-red-500" />
-              <span className="text-red-600">Offline</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <WifiOff className="h-4 w-4 text-red-500" />
+                <span className="text-red-600">Offline</span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => service.forceReconnect()}
+                className="h-6 text-xs"
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Reconnect
+              </Button>
             </div>
           )}
           {lastUpdated && (

@@ -6,15 +6,15 @@ const WEBSOCKET_URL = 'http://localhost:3001';
 class WebSocketService {
   private socket: Socket | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 2;
-  private reconnectInterval = 10000;
+  private maxReconnectAttempts = 10;
+  private reconnectInterval = 3000;
   private subscribers: Map<string, Array<(data: any) => void>> = new Map();
 
   constructor() {
     // Auto-connect when service is created to maintain persistent connection
     setTimeout(() => {
       this.connect();
-    }, 1000); // Small delay to allow backend to start
+    }, 500); // Faster initial connection
   }
 
   // Connect to WebSocket server
@@ -25,13 +25,20 @@ class WebSocketService {
 
     console.log('🔌 Connecting to WebSocket server...');
     
+    // Reset reconnect attempts when manually connecting
+    this.reconnectAttempts = 0;
+    
     this.socket = io(WEBSOCKET_URL, {
       transports: ['websocket', 'polling'],
-      timeout: 20000,
+      timeout: 10000,
       upgrade: true,
       rememberUpgrade: true,
       forceNew: false,
-      reconnection: false, // We'll handle reconnection manually
+      reconnection: true, // Enable automatic reconnection
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5,
     });
 
     this.setupEventListeners();
@@ -52,18 +59,32 @@ class WebSocketService {
     this.socket.on('disconnect', (reason) => {
       console.log('❌ WebSocket disconnected:', reason);
       this.emit('connection', { status: 'disconnected', reason, timestamp: new Date().toISOString() });
-      
-      // Only auto-reconnect if not manually disconnected
-      if (reason !== 'io client disconnect' && reason !== 'transport close') {
-        this.handleReconnect();
-      }
+    });
+
+    this.socket.on('reconnect', (attemptNumber) => {
+      console.log('✅ WebSocket reconnected after', attemptNumber, 'attempts');
+      this.reconnectAttempts = 0;
+      this.emit('connection', { status: 'reconnected', attemptNumber, timestamp: new Date().toISOString() });
+    });
+
+    this.socket.on('reconnecting', (attemptNumber) => {
+      console.log('🔄 WebSocket reconnecting... attempt', attemptNumber);
+      this.emit('connection', { status: 'reconnecting', attemptNumber, timestamp: new Date().toISOString() });
+    });
+
+    this.socket.on('reconnect_error', (error) => {
+      console.error('🚫 WebSocket reconnection error:', error);
+      this.emit('connection', { status: 'reconnect_error', error: error.message, timestamp: new Date().toISOString() });
+    });
+
+    this.socket.on('reconnect_failed', () => {
+      console.error('❌ WebSocket reconnection failed after all attempts');
+      this.emit('connection', { status: 'reconnect_failed', timestamp: new Date().toISOString() });
     });
 
     this.socket.on('connect_error', (error) => {
       console.error('🚫 WebSocket connection error:', error);
       this.emit('connection', { status: 'error', error: error.message, timestamp: new Date().toISOString() });
-      
-      this.handleReconnect();
     });
 
     // Real-time data events
@@ -187,6 +208,19 @@ class WebSocketService {
       subscriberCount: Array.from(this.subscribers.values())
         .reduce((total, callbacks) => total + callbacks.length, 0)
     };
+  }
+
+  // Force reconnection
+  forceReconnect(): void {
+    console.log('🔄 Forcing WebSocket reconnection...');
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+    // Reset and reconnect
+    this.reconnectAttempts = 0;
+    setTimeout(() => {
+      this.connect();
+    }, 500);
   }
 
   // Disconnect

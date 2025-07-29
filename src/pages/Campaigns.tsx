@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { campaignsAPI, exportAPI, Campaign } from "@/services/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Search, Filter, Plus, Wifi, WifiOff } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Download, Search, Filter, Plus, Wifi, WifiOff, Calendar } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWebSocket } from "@/services/websocket";
+import { useToast } from "@/hooks/use-toast";
 
 // Sample fallback data to prevent crashes
 const sampleCampaigns: Campaign[] = [
@@ -99,8 +102,64 @@ export default function Campaigns() {
   const [sortBy, setSortBy] = useState("updatedAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  
+  // Loading states for downloads
+  const [downloadingCSV, setDownloadingCSV] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
+  
+  // New campaign dialog
+  const [showNewCampaignDialog, setShowNewCampaignDialog] = useState(false);
+  const [newCampaign, setNewCampaign] = useState({
+    name: '',
+    budget: '',
+    startDate: '',
+    endDate: '',
+    status: 'active'
+  });
+  
+  const { toast } = useToast();
 
   const { isConnected, subscribe, on } = useWebSocket();
+
+  // Filter and sort campaigns based on current filters
+  const filteredCampaigns = useMemo(() => {
+    let filtered = [...campaigns];
+
+    // Apply search filter
+    if (search.trim()) {
+      filtered = filtered.filter(campaign =>
+        campaign.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(campaign => campaign.status === statusFilter);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue: any = a[sortBy as keyof Campaign];
+      let bValue: any = b[sortBy as keyof Campaign];
+
+      // Handle different data types
+      if (sortBy === 'updatedAt' || sortBy === 'createdAt') {
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
+      } else if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    return filtered;
+  }, [campaigns, search, statusFilter, sortBy, sortOrder]);
 
   // Load initial data (disabled to prevent aggressive retries)
   // useEffect(() => {
@@ -154,22 +213,497 @@ export default function Campaigns() {
   };
 
   const handleExportCSV = async () => {
+    setDownloadingCSV(true);
     try {
-      await exportAPI.exportCampaignsCSV({
-        status: statusFilter !== "all" ? statusFilter : undefined
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 1000));
+      
+      // Generate CSV data from filtered campaigns
+      const csvData = generateCampaignCSV(filteredCampaigns);
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `campaigns_${statusFilter}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "CSV Export Complete",
+        description: `${filteredCampaigns.length} campaigns exported successfully.`,
       });
     } catch (err) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export campaigns CSV. Please try again.",
+        variant: "destructive",
+      });
       console.error('Export failed:', err);
+    } finally {
+      setDownloadingCSV(false);
     }
   };
 
   const handleExportPDF = async () => {
+    setDownloadingPDF(true);
     try {
-      await exportAPI.exportReportPDF({
-        reportType: 'campaigns'
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 1000));
+      
+      // Generate actual PDF using browser's print functionality
+      await generatePDFReport(filteredCampaigns, statusFilter);
+
+      toast({
+        title: "PDF Report Complete",
+        description: `Campaign report generated successfully.`,
       });
     } catch (err) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate PDF report. Please try again.",
+        variant: "destructive",
+      });
       console.error('PDF export failed:', err);
+    } finally {
+      setDownloadingPDF(false);
+    }
+  };
+
+  // Generate CSV data for campaigns
+  const generateCampaignCSV = (campaigns: Campaign[]): string => {
+    const headers = [
+      'Campaign Name', 'Status', 'Start Date', 'End Date', 'Budget', 'Spent', 
+      'Impressions', 'Clicks', 'CTR', 'Conversions', 'Conversion Rate', 
+      'Cost Per Click', 'Cost Per Conversion', 'ROAS', 'Created At', 'Updated At'
+    ];
+    
+    const rows = campaigns.map(campaign => [
+      campaign.name,
+      campaign.status,
+      campaign.startDate,
+      campaign.endDate,
+      campaign.budget,
+      campaign.spent,
+      campaign.impressions,
+      campaign.clicks,
+      campaign.ctr,
+      campaign.conversions,
+      campaign.conversionRate,
+      campaign.costPerClick,
+      campaign.costPerConversion,
+      campaign.roas,
+      campaign.createdAt,
+      campaign.updatedAt
+    ]);
+
+    return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+  };
+
+  // Generate report data for campaigns
+  const generateCampaignReport = (campaigns: Campaign[]): string => {
+    const totalBudget = campaigns.reduce((sum, c) => sum + c.budget, 0);
+    const totalSpent = campaigns.reduce((sum, c) => sum + c.spent, 0);
+    const totalImpressions = campaigns.reduce((sum, c) => sum + c.impressions, 0);
+    const totalClicks = campaigns.reduce((sum, c) => sum + c.clicks, 0);
+    const totalConversions = campaigns.reduce((sum, c) => sum + c.conversions, 0);
+    const avgROAS = campaigns.reduce((sum, c) => sum + c.roas, 0) / campaigns.length;
+
+    return `
+CAMPAIGN PERFORMANCE REPORT
+Generated: ${new Date().toLocaleString()}
+Filter: ${statusFilter === 'all' ? 'All Campaigns' : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+
+SUMMARY
+=======
+Total Campaigns: ${campaigns.length}
+Total Budget: $${totalBudget.toLocaleString()}
+Total Spent: $${totalSpent.toLocaleString()}
+Budget Utilization: ${((totalSpent / totalBudget) * 100).toFixed(1)}%
+Total Impressions: ${totalImpressions.toLocaleString()}
+Total Clicks: ${totalClicks.toLocaleString()}
+Total Conversions: ${totalConversions.toLocaleString()}
+Average ROAS: ${avgROAS.toFixed(2)}x
+
+CAMPAIGN DETAILS
+===============
+${campaigns.map(campaign => `
+Campaign: ${campaign.name}
+Status: ${campaign.status}
+Period: ${campaign.startDate} to ${campaign.endDate}
+Budget: $${campaign.budget.toLocaleString()}
+Spent: $${campaign.spent.toLocaleString()} (${((campaign.spent / campaign.budget) * 100).toFixed(1)}%)
+Performance: ${campaign.impressions.toLocaleString()} impressions, ${campaign.clicks.toLocaleString()} clicks, ${campaign.conversions} conversions
+ROAS: ${campaign.roas}x
+`).join('\n')}
+    `.trim();
+  };
+
+  // Generate actual PDF report
+  const generatePDFReport = async (campaigns: Campaign[], filterStatus: string): Promise<void> => {
+    return new Promise((resolve) => {
+      // Create a new window for PDF generation
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Failed to open print window');
+      }
+
+      const totalBudget = campaigns.reduce((sum, c) => sum + c.budget, 0);
+      const totalSpent = campaigns.reduce((sum, c) => sum + c.spent, 0);
+      const totalImpressions = campaigns.reduce((sum, c) => sum + c.impressions, 0);
+      const totalClicks = campaigns.reduce((sum, c) => sum + c.clicks, 0);
+      const totalConversions = campaigns.reduce((sum, c) => sum + c.conversions, 0);
+      const avgROAS = campaigns.reduce((sum, c) => sum + c.roas, 0) / campaigns.length;
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Campaign Performance Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 40px;
+              line-height: 1.6;
+              color: #333;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .company-name {
+              font-size: 24px;
+              font-weight: bold;
+              color: #2563eb;
+              margin-bottom: 10px;
+            }
+            .report-title {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 5px;
+            }
+            .report-date {
+              font-size: 14px;
+              color: #666;
+              margin-bottom: 10px;
+            }
+            .filter-info {
+              font-size: 14px;
+              background: #f3f4f6;
+              padding: 8px 16px;
+              border-radius: 6px;
+              display: inline-block;
+            }
+            .summary {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 30px;
+              border-left: 4px solid #2563eb;
+            }
+            .summary h2 {
+              color: #2563eb;
+              margin-top: 0;
+              font-size: 18px;
+            }
+            .summary-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 20px;
+              margin-top: 15px;
+            }
+            .summary-item {
+              text-align: center;
+            }
+            .summary-value {
+              font-size: 20px;
+              font-weight: bold;
+              color: #1f2937;
+            }
+            .summary-label {
+              font-size: 12px;
+              color: #6b7280;
+              text-transform: uppercase;
+              margin-top: 5px;
+            }
+            .campaigns-section h2 {
+              color: #374151;
+              border-bottom: 1px solid #e5e7eb;
+              padding-bottom: 10px;
+              margin-bottom: 20px;
+            }
+            .campaign-card {
+              border: 1px solid #e5e7eb;
+              border-radius: 8px;
+              padding: 20px;
+              margin-bottom: 20px;
+              page-break-inside: avoid;
+            }
+            .campaign-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 15px;
+            }
+            .campaign-name {
+              font-size: 16px;
+              font-weight: bold;
+              color: #1f2937;
+            }
+            .campaign-status {
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 12px;
+              font-weight: bold;
+              text-transform: uppercase;
+            }
+            .status-active { background: #dcfce7; color: #166534; }
+            .status-paused { background: #fef3c7; color: #92400e; }
+            .status-completed { background: #e0e7ff; color: #3730a3; }
+            .campaign-metrics {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 15px;
+              margin-top: 15px;
+            }
+            .metric {
+              text-align: center;
+              padding: 10px;
+              background: #f9fafb;
+              border-radius: 6px;
+            }
+            .metric-value {
+              font-size: 14px;
+              font-weight: bold;
+              color: #1f2937;
+            }
+            .metric-label {
+              font-size: 11px;
+              color: #6b7280;
+              margin-top: 2px;
+            }
+            .footer {
+              margin-top: 40px;
+              text-align: center;
+              font-size: 12px;
+              color: #9ca3af;
+              border-top: 1px solid #e5e7eb;
+              padding-top: 20px;
+            }
+            @media print {
+              body { margin: 0; }
+              .header { page-break-after: avoid; }
+              .campaign-card { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">AdMyBrand Analytics</div>
+            <div class="report-title">Campaign Performance Report</div>
+            <div class="report-date">Generated on ${new Date().toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</div>
+            <div class="filter-info">
+              Filter: ${filterStatus === 'all' ? 'All Campaigns' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1) + ' Campaigns'}
+            </div>
+          </div>
+
+          <div class="summary">
+            <h2>Executive Summary</h2>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <div class="summary-value">${campaigns.length}</div>
+                <div class="summary-label">Total Campaigns</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">$${totalBudget.toLocaleString()}</div>
+                <div class="summary-label">Total Budget</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">$${totalSpent.toLocaleString()}</div>
+                <div class="summary-label">Total Spent</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">${((totalSpent / totalBudget) * 100).toFixed(1)}%</div>
+                <div class="summary-label">Budget Utilization</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">${totalImpressions.toLocaleString()}</div>
+                <div class="summary-label">Total Impressions</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">${totalClicks.toLocaleString()}</div>
+                <div class="summary-label">Total Clicks</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">${totalConversions.toLocaleString()}</div>
+                <div class="summary-label">Total Conversions</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">${avgROAS.toFixed(2)}x</div>
+                <div class="summary-label">Average ROAS</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-value">${((totalClicks / totalImpressions) * 100).toFixed(2)}%</div>
+                <div class="summary-label">Overall CTR</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="campaigns-section">
+            <h2>Campaign Details</h2>
+            ${campaigns.map(campaign => `
+              <div class="campaign-card">
+                <div class="campaign-header">
+                  <div class="campaign-name">${campaign.name}</div>
+                  <div class="campaign-status status-${campaign.status}">${campaign.status}</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                  <div>
+                    <strong>Campaign Period:</strong><br>
+                    ${new Date(campaign.startDate).toLocaleDateString()} - ${new Date(campaign.endDate).toLocaleDateString()}
+                  </div>
+                  <div>
+                    <strong>Budget Usage:</strong><br>
+                    $${campaign.spent.toLocaleString()} of $${campaign.budget.toLocaleString()} (${((campaign.spent / campaign.budget) * 100).toFixed(1)}%)
+                  </div>
+                </div>
+                <div class="campaign-metrics">
+                  <div class="metric">
+                    <div class="metric-value">${campaign.impressions.toLocaleString()}</div>
+                    <div class="metric-label">Impressions</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-value">${campaign.clicks.toLocaleString()}</div>
+                    <div class="metric-label">Clicks</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-value">${campaign.ctr}%</div>
+                    <div class="metric-label">CTR</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-value">${campaign.conversions}</div>
+                    <div class="metric-label">Conversions</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-value">${campaign.conversionRate}%</div>
+                    <div class="metric-label">Conv. Rate</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-value">$${campaign.costPerClick.toFixed(2)}</div>
+                    <div class="metric-label">Cost/Click</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-value">$${campaign.costPerConversion.toFixed(2)}</div>
+                    <div class="metric-label">Cost/Conversion</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-value" style="color: ${campaign.roas >= 3 ? '#166534' : campaign.roas >= 2 ? '#92400e' : '#dc2626'};">
+                      ${campaign.roas}x
+                    </div>
+                    <div class="metric-label">ROAS</div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="footer">
+            <p>This report was generated by AdMyBrand Analytics Dashboard</p>
+            <p>For questions or support, contact your analytics team</p>
+          </div>
+
+          <script>
+            window.onload = function() {
+              // Auto-print and close
+              setTimeout(function() {
+                window.print();
+                setTimeout(function() {
+                  window.close();
+                }, 1000);
+              }, 500);
+            }
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      
+      // Resolve after a short delay to allow the print dialog to appear
+      setTimeout(() => {
+        resolve();
+      }, 1500);
+    });
+  };
+
+  // Handle creating a new campaign
+  const handleCreateCampaign = async () => {
+    try {
+      // Validate form
+      if (!newCampaign.name || !newCampaign.budget || !newCampaign.startDate || !newCampaign.endDate) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const newCampaignData: Campaign = {
+        id: (campaigns.length + 1).toString(),
+        name: newCampaign.name,
+        status: newCampaign.status as any,
+        startDate: newCampaign.startDate,
+        endDate: newCampaign.endDate,
+        budget: parseFloat(newCampaign.budget),
+        spent: 0,
+        impressions: 0,
+        clicks: 0,
+        conversions: 0,
+        ctr: 0,
+        conversionRate: 0,
+        costPerClick: 0,
+        costPerConversion: 0,
+        roas: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      setCampaigns(prev => [newCampaignData, ...prev]);
+      setShowNewCampaignDialog(false);
+      setNewCampaign({
+        name: '',
+        budget: '',
+        startDate: '',
+        endDate: '',
+        status: 'active'
+      });
+
+      toast({
+        title: "Campaign Created",
+        description: `${newCampaign.name} has been created successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Creation Failed",
+        description: "Failed to create campaign. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -224,15 +758,46 @@ export default function Campaigns() {
               </span>
             )}
           </div>
-          <Button onClick={handleExportCSV} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            CSV
+          <Button 
+            onClick={handleExportCSV} 
+            variant="outline" 
+            size="sm"
+            disabled={downloadingCSV}
+          >
+            {downloadingCSV ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                CSV
+              </>
+            )}
           </Button>
-          <Button onClick={handleExportPDF} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            PDF
+          <Button 
+            onClick={handleExportPDF} 
+            variant="outline" 
+            size="sm"
+            disabled={downloadingPDF}
+          >
+            {downloadingPDF ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                PDF
+              </>
+            )}
           </Button>
-          <Button className="bg-gradient-primary">
+          <Button 
+            className="bg-gradient-primary"
+            onClick={() => setShowNewCampaignDialog(true)}
+          >
             <Plus className="mr-2 h-4 w-4" />
             New Campaign
           </Button>
@@ -315,7 +880,8 @@ export default function Campaigns() {
         <CardHeader>
           <CardTitle>All Campaigns</CardTitle>
           <CardDescription>
-            {campaigns?.length || 0} campaigns found
+            {filteredCampaigns?.length || 0} campaigns found
+            {search || statusFilter !== "all" ? ` (filtered from ${campaigns?.length || 0} total)` : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -334,7 +900,7 @@ export default function Campaigns() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {campaigns && campaigns.length > 0 ? campaigns.map((campaign) => (
+              {filteredCampaigns && filteredCampaigns.length > 0 ? filteredCampaigns.map((campaign) => (
                 <TableRow key={campaign.id} className="border-glass-border hover:bg-muted/50">
                   <TableCell className="font-medium text-foreground">
                     <div>
@@ -367,7 +933,10 @@ export default function Campaigns() {
               )) : (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                    {loading ? "Loading campaigns..." : "No campaigns found"}
+                    {loading ? "Loading campaigns..." : 
+                     search || statusFilter !== "all" ? 
+                     "No campaigns match your filters" : 
+                     "No campaigns found"}
                   </TableCell>
                 </TableRow>
               )}
@@ -375,6 +944,99 @@ export default function Campaigns() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* New Campaign Dialog */}
+      <Dialog open={showNewCampaignDialog} onOpenChange={setShowNewCampaignDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Campaign</DialogTitle>
+            <DialogDescription>
+              Add a new marketing campaign to track performance and ROI.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name *
+              </Label>
+              <Input
+                id="name"
+                placeholder="Summer Sale 2024"
+                className="col-span-3"
+                value={newCampaign.name}
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="budget" className="text-right">
+                Budget *
+              </Label>
+              <Input
+                id="budget"
+                type="number"
+                placeholder="50000"
+                className="col-span-3"
+                value={newCampaign.budget}
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, budget: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="startDate" className="text-right">
+                Start Date *
+              </Label>
+              <Input
+                id="startDate"
+                type="date"
+                className="col-span-3"
+                value={newCampaign.startDate}
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, startDate: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="endDate" className="text-right">
+                End Date *
+              </Label>
+              <Input
+                id="endDate"
+                type="date"
+                className="col-span-3"
+                value={newCampaign.endDate}
+                onChange={(e) => setNewCampaign(prev => ({ ...prev, endDate: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="status" className="text-right">
+                Status
+              </Label>
+              <Select 
+                value={newCampaign.status} 
+                onValueChange={(value) => setNewCampaign(prev => ({ ...prev, status: value }))}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowNewCampaignDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleCreateCampaign} className="bg-gradient-primary">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Campaign
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
