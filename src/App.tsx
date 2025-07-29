@@ -10,6 +10,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Reports from "./pages/Reports";
 import Campaigns from "./pages/Campaigns";
+import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -32,7 +33,7 @@ const App = () => (
                     <Route path="/" element={<Index />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/campaigns" element={<Campaigns />} />
-                    <Route path="/analytics" element={<Index />} />
+                    <Route path="/analytics" element={<Analytics />} />
                     <Route path="/settings" element={<Settings />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
