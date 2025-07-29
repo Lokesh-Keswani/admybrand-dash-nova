@@ -135,43 +135,54 @@ export function UserEngagementChart({ height = 300 }: { height?: number }) {
 // Conversion Funnel Chart
 export function ConversionFunnelChart({ height = 300 }: { height?: number }) {
   const funnelData = [
-    { stage: 'Visitors', users: 108000, percentage: 100, color: '#3b82f6' },
-    { stage: 'Product Views', users: 64800, percentage: 60, color: '#10b981' },
-    { stage: 'Add to Cart', users: 21600, percentage: 20, color: '#f59e0b' },
-    { stage: 'Checkout', users: 10800, percentage: 10, color: '#ef4444' },
-    { stage: 'Purchase', users: 3240, percentage: 3, color: '#8b5cf6' }
+    { stage: 'Visitors', users: 108000 },
+    { stage: 'Product Views', users: 64800 },
+    { stage: 'Add to Cart', users: 21600 },
+    { stage: 'Checkout', users: 10800 },
+    { stage: 'Purchase', users: 3240 }
   ];
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <BarChart 
-        data={funnelData} 
-        margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-        <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-        <YAxis 
-          type="category" 
-          dataKey="stage" 
-          stroke="hsl(var(--muted-foreground))"
-          fontSize={12}
-          width={80}
-        />
-        <Tooltip 
-          formatter={(value: number) => [value.toLocaleString(), 'Users']}
-          contentStyle={{
-            backgroundColor: 'hsl(var(--background))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '6px'
-          }}
-        />
-        <Bar 
-          dataKey="users" 
-          fill="hsl(var(--primary))"
-          radius={[0, 4, 4, 0]}
-        />
-      </BarChart>
-    </ResponsiveContainer>
+    <div style={{ width: '100%', height: height, minHeight: '300px' }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart 
+          data={funnelData} 
+          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.3} />
+          <XAxis 
+            dataKey="stage" 
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+            angle={-45}
+            textAnchor="end"
+            height={60}
+          />
+          <YAxis 
+            tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+          />
+          <Tooltip 
+            formatter={(value: number) => [`${value.toLocaleString()}`, 'Users']}
+            labelFormatter={(label) => `${label}`}
+            contentStyle={{
+              backgroundColor: 'hsl(var(--background))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            }}
+          />
+          <Bar 
+            dataKey="users" 
+            fill="hsl(var(--primary))"
+            stroke="hsl(var(--border))"
+            strokeWidth={1}
+            radius={[4, 4, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 

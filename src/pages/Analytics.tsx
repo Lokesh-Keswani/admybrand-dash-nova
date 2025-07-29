@@ -190,7 +190,7 @@ export default function Analytics() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ConversionFunnelChart height={250} />
+                <ConversionFunnelChart height={300} />
               </CardContent>
             </Card>
           </div>

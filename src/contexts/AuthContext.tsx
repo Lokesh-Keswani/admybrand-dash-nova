@@ -14,6 +14,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  updateProfile: (name: string, email: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -100,13 +102,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('admybrand_user');
   };
 
+  const updateProfile = async (name: string, email: string): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (!user) {
+        return { success: false, error: 'No user logged in' };
+      }
+
+      // Update user data
+      const updatedUser = {
+        ...user,
+        name,
+        email
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem('admybrand_user', JSON.stringify(updatedUser));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Failed to update profile. Please try again.' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updatePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (!user) {
+        return { success: false, error: 'No user logged in' };
+      }
+
+      // For demo purposes, just simulate password update
+      // In a real app, this would verify the current password and update it
+      if (currentPassword.length < 3) {
+        return { success: false, error: 'Current password is incorrect' };
+      }
+
+      if (newPassword.length < 6) {
+        return { success: false, error: 'New password must be at least 6 characters long' };
+      }
+
+      // Password updated successfully (in a real app, this would update the backend)
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Failed to update password. Please try again.' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
     isLoading,
     login,
     signup,
-    logout
+    logout,
+    updateProfile,
+    updatePassword
   };
 
   return (
