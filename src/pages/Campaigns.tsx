@@ -13,6 +13,44 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWebSocket } from "@/services/websocket";
 import { useToast } from "@/hooks/use-toast";
 
+// LocalStorage key for campaigns
+const CAMPAIGNS_STORAGE_KEY = 'admybrand_campaigns';
+
+// LocalStorage utility functions
+const saveCampaignsToStorage = (campaigns: Campaign[]) => {
+  try {
+    localStorage.setItem(CAMPAIGNS_STORAGE_KEY, JSON.stringify(campaigns));
+  } catch (error) {
+    console.warn('Failed to save campaigns to localStorage:', error);
+  }
+};
+
+const loadCampaignsFromStorage = (): Campaign[] | null => {
+  try {
+    const stored = localStorage.getItem(CAMPAIGNS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.warn('Failed to load campaigns from localStorage:', error);
+  }
+  return null;
+};
+
+const clearCampaignsFromStorage = () => {
+  try {
+    localStorage.removeItem(CAMPAIGNS_STORAGE_KEY);
+    console.log('Campaigns cleared from localStorage');
+  } catch (error) {
+    console.warn('Failed to clear campaigns from localStorage:', error);
+  }
+};
+
+// For debugging purposes - expose to window object in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  (window as any).clearCampaigns = clearCampaignsFromStorage;
+}
+
 // Sample fallback data to prevent crashes
 const sampleCampaigns: Campaign[] = [
   {
@@ -94,7 +132,11 @@ const sampleCampaigns: Campaign[] = [
 ];
 
 export default function Campaigns() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(sampleCampaigns);
+  // Initialize campaigns from localStorage or fallback to sample data
+  const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
+    const storedCampaigns = loadCampaignsFromStorage();
+    return storedCampaigns || sampleCampaigns;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -119,7 +161,38 @@ export default function Campaigns() {
   
   const { toast } = useToast();
 
+  // Custom function to update campaigns and save to localStorage
+  const updateCampaigns = (newCampaigns: Campaign[] | ((prev: Campaign[]) => Campaign[])) => {
+    setCampaigns(prev => {
+      const updated = typeof newCampaigns === 'function' ? newCampaigns(prev) : newCampaigns;
+      saveCampaignsToStorage(updated);
+      return updated;
+    });
+  };
+
   const { isConnected, subscribe, on } = useWebSocket();
+
+  // Backup: Save campaigns to localStorage whenever campaigns state changes
+  useEffect(() => {
+    saveCampaignsToStorage(campaigns);
+  }, [campaigns]);
+
+  // Listen for localStorage changes from other tabs/windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === CAMPAIGNS_STORAGE_KEY && e.newValue) {
+        try {
+          const updatedCampaigns = JSON.parse(e.newValue);
+          setCampaigns(updatedCampaigns);
+        } catch (error) {
+          console.warn('Failed to parse campaigns from storage event:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Filter and sort campaigns based on current filters
   const filteredCampaigns = useMemo(() => {
@@ -665,7 +738,7 @@ ROAS: ${campaign.roas}x
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       const newCampaignData: Campaign = {
-        id: (campaigns.length + 1).toString(),
+        id: `campaign_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: newCampaign.name,
         status: newCampaign.status as any,
         startDate: newCampaign.startDate,
@@ -684,7 +757,7 @@ ROAS: ${campaign.roas}x
         updatedAt: new Date().toISOString()
       };
 
-      setCampaigns(prev => [newCampaignData, ...prev]);
+      updateCampaigns(prev => [newCampaignData, ...prev]);
       setShowNewCampaignDialog(false);
       setNewCampaign({
         name: '',
@@ -696,7 +769,7 @@ ROAS: ${campaign.roas}x
 
       toast({
         title: "Campaign Created",
-        description: `${newCampaign.name} has been created successfully.`,
+        description: `${newCampaign.name} has been created and saved locally. It will persist across page refreshes.`,
       });
     } catch (error) {
       toast({

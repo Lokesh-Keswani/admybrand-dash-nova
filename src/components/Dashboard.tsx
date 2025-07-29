@@ -11,6 +11,22 @@ import { RevenueChart } from "@/components/charts/RevenueChart"
 import { ConversionsChart } from "@/components/charts/ConversionsChart"
 import { TrafficSourcesChart } from "@/components/charts/TrafficSourcesChart"
 
+// LocalStorage key for campaigns (same as Campaigns page)
+const CAMPAIGNS_STORAGE_KEY = 'admybrand_campaigns';
+
+// LocalStorage utility function
+const loadCampaignsFromStorage = (): Campaign[] | null => {
+  try {
+    const stored = localStorage.getItem(CAMPAIGNS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.warn('Failed to load campaigns from localStorage:', error);
+  }
+  return null;
+};
+
 // Global persistent metrics to prevent reset flicker
 let globalMetrics: Metrics | null = null;
 
@@ -85,7 +101,11 @@ const sampleCampaigns: Campaign[] = [
 
 export function Dashboard() {
   const [metrics, setMetrics] = useState<Metrics | null>(globalMetrics || sampleMetrics);
-  const [campaigns, setCampaigns] = useState<Campaign[]>(sampleCampaigns);
+  // Load campaigns from localStorage or fallback to sample data
+  const [campaigns, setCampaigns] = useState<Campaign[]>(() => {
+    const storedCampaigns = loadCampaignsFromStorage();
+    return storedCampaigns || sampleCampaigns;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
@@ -97,6 +117,31 @@ export function Dashboard() {
   useEffect(() => {
     setConnectionStatus(isConnected ? 'connected' : 'disconnected');
   }, [isConnected]);
+
+  // Refresh campaigns from localStorage when component mounts
+  useEffect(() => {
+    const storedCampaigns = loadCampaignsFromStorage();
+    if (storedCampaigns) {
+      setCampaigns(storedCampaigns);
+    }
+  }, []);
+
+  // Listen for localStorage changes from other tabs/windows  
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === CAMPAIGNS_STORAGE_KEY && e.newValue) {
+        try {
+          const updatedCampaigns = JSON.parse(e.newValue);
+          setCampaigns(updatedCampaigns);
+        } catch (error) {
+          console.warn('Failed to parse campaigns from storage event:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Listen for connection status events
   useEffect(() => {
