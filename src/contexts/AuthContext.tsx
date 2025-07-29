@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+const API_BASE_URL = 'http://localhost:3001/api';
+
 interface User {
   id: string;
   email: string;
@@ -16,6 +18,7 @@ interface AuthContextType {
   logout: () => void;
   updateProfile: (name: string, email: string) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  deleteAccount: () => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,82 +26,126 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Check for stored user on app load
+  // Check for stored token and validate on app load
   useEffect(() => {
-    const storedUser = localStorage.getItem('admybrand_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('admybrand_user');
+    const checkAuthStatus = async () => {
+      const token = localStorage.getItem('admybrand_token');
+      if (token) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setUser(data.user);
+          } else {
+            // Token is invalid, remove it
+            localStorage.removeItem('admybrand_token');
+            localStorage.removeItem('admybrand_user');
+          }
+        } catch (error) {
+          console.error('Error validating token:', error);
+          localStorage.removeItem('admybrand_token');
+          localStorage.removeItem('admybrand_user');
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    checkAuthStatus();
   }, []);
 
+  // Set loading to false when user state changes (for login success)
+  useEffect(() => {
+    if (user && isLoading && isLoggingIn) {
+      setIsLoading(false);
+      setIsLoggingIn(false);
+    }
+  }, [user, isLoading, isLoggingIn]);
+
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true);
-    
     try {
-      // For demo purposes, we'll use mock authentication
-      // In a real app, this would make an API call to your backend
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
       
-      // Demo credentials
-      const demoUsers = [
-        { id: '1', email: 'admin@admybrand.com', password: 'admin123', name: 'Admin User', role: 'admin' },
-        { id: '2', email: 'user@admybrand.com', password: 'user123', name: 'Regular User', role: 'user' },
-        { id: '3', email: 'demo@admybrand.com', password: 'demo123', name: 'Demo User', role: 'demo' }
-      ];
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        return { success: false, error: 'Server response error. Please try again.' };
+      }
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const foundUser = demoUsers.find(u => u.email === email && u.password === password);
-      
-      if (foundUser) {
-        const { password: _, ...userWithoutPassword } = foundUser;
-        setUser(userWithoutPassword);
-        localStorage.setItem('admybrand_user', JSON.stringify(userWithoutPassword));
+      if (response.ok && data.success) {
+        // Only set loading state when we're about to succeed
+        setIsLoading(true);
+        setIsLoggingIn(true);
+        
+        setUser(data.user);
+        localStorage.setItem('admybrand_token', data.token);
+        localStorage.setItem('admybrand_user', JSON.stringify(data.user));
+        // Don't set loading to false here - let the user state update handle it
         return { success: true };
       } else {
-        return { success: false, error: 'Invalid email or password' };
+        // For failed login, don't affect global loading state
+        // Return error immediately
+        const errorMessage = data.message || 'Login failed';
+        return { success: false, error: errorMessage };
       }
     } catch (error) {
-      return { success: false, error: 'Login failed. Please try again.' };
-    } finally {
-      setIsLoading(false);
+      console.error('Login network error:', error);
+      return { success: false, error: 'Network error. Please check your connection and try again.' };
     }
   };
 
   const signup = async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
+    setIsLoggingIn(true);
     
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, email, password })
+      });
 
-      // For demo purposes, auto-create user
-      const newUser: User = {
-        id: Date.now().toString(),
-        email,
-        name,
-        role: 'user'
-      };
+      const data = await response.json();
 
-      setUser(newUser);
-      localStorage.setItem('admybrand_user', JSON.stringify(newUser));
-      return { success: true };
+      if (response.ok && data.success) {
+        setUser(data.user);
+        localStorage.setItem('admybrand_token', data.token);
+        localStorage.setItem('admybrand_user', JSON.stringify(data.user));
+        // Don't set loading to false on success - let the user state update trigger the redirect
+        return { success: true };
+      } else {
+        setIsLoading(false);
+        setIsLoggingIn(false);
+        return { success: false, error: data.message || 'Signup failed' };
+      }
     } catch (error) {
-      return { success: false, error: 'Signup failed. Please try again.' };
-    } finally {
+      console.error('Signup error:', error);
       setIsLoading(false);
+      setIsLoggingIn(false);
+      return { success: false, error: 'Network error. Please check your connection.' };
     }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('admybrand_token');
     localStorage.removeItem('admybrand_user');
   };
 
@@ -106,25 +153,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (!user) {
-        return { success: false, error: 'No user logged in' };
+      const token = localStorage.getItem('admybrand_token');
+      if (!token) {
+        return { success: false, error: 'No authentication token found' };
       }
 
-      // Update user data
-      const updatedUser = {
-        ...user,
-        name,
-        email
-      };
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, email })
+      });
 
-      setUser(updatedUser);
-      localStorage.setItem('admybrand_user', JSON.stringify(updatedUser));
-      return { success: true };
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setUser(data.user);
+        localStorage.setItem('admybrand_user', JSON.stringify(data.user));
+        return { success: true };
+      } else {
+        return { success: false, error: data.message || 'Profile update failed' };
+      }
     } catch (error) {
-      return { success: false, error: 'Failed to update profile. Please try again.' };
+      console.error('Profile update error:', error);
+      return { success: false, error: 'Network error. Please check your connection.' };
     } finally {
       setIsLoading(false);
     }
@@ -134,27 +188,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (!user) {
-        return { success: false, error: 'No user logged in' };
+      const token = localStorage.getItem('admybrand_token');
+      if (!token) {
+        return { success: false, error: 'No authentication token found' };
       }
 
-      // For demo purposes, just simulate password update
-      // In a real app, this would verify the current password and update it
-      if (currentPassword.length < 3) {
-        return { success: false, error: 'Current password is incorrect' };
-      }
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
 
-      if (newPassword.length < 6) {
-        return { success: false, error: 'New password must be at least 6 characters long' };
-      }
+      const data = await response.json();
 
-      // Password updated successfully (in a real app, this would update the backend)
-      return { success: true };
+      if (response.ok && data.success) {
+        return { success: true };
+      } else {
+        return { success: false, error: data.message || 'Password change failed' };
+      }
     } catch (error) {
-      return { success: false, error: 'Failed to update password. Please try again.' };
+      console.error('Password change error:', error);
+      return { success: false, error: 'Network error. Please check your connection.' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteAccount = async (): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    
+    try {
+      const token = localStorage.getItem('admybrand_token');
+      if (!token) {
+        return { success: false, error: 'No authentication token found' };
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/delete-account`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Clear user data and logout
+        setUser(null);
+        localStorage.removeItem('admybrand_token');
+        localStorage.removeItem('admybrand_user');
+        return { success: true };
+      } else {
+        return { success: false, error: data.message || 'Account deletion failed' };
+      }
+    } catch (error) {
+      console.error('Account deletion error:', error);
+      return { success: false, error: 'Network error. Please check your connection.' };
     } finally {
       setIsLoading(false);
     }
@@ -168,7 +261,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signup,
     logout,
     updateProfile,
-    updatePassword
+    updatePassword,
+    deleteAccount
   };
 
   return (

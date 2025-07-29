@@ -24,29 +24,52 @@ interface LoginFormProps {
 export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const { login, isLoading } = useAuth();
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
+  const { login } = useAuth();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors }
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema)
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setError('');
-    const result = await login(data.email, data.password);
+    setIsSubmittingForm(true);
     
-    if (!result.success) {
-      setError(result.error || 'Login failed');
+    try {
+      // Call login function from AuthContext
+      const result = await login(data.email, data.password);
+      
+      if (!result.success) {
+        // Show error message without affecting global loading state
+        const errorMessage = result.error || 'Invalid Email or Password';
+        setError(errorMessage);
+        // Make sure we're not in submitting state
+        setIsSubmittingForm(false);
+        return;
+      }
+      
+      // Success - AuthContext will handle redirect
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('An unexpected error occurred. Please try again.');
+      setIsSubmittingForm(false);
     }
+    // Don't set setIsSubmittingForm(false) here for success case
+    // Let the AuthContext handle the transition
+  };
+
+  // Handle form submission with explicit preventDefault
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmit(onSubmit)(e);
   };
 
   const demoCredentials = [
-    { email: 'admin@admybrand.com', password: 'admin123', role: 'Admin' },
-    { email: 'user@admybrand.com', password: 'user123', role: 'User' },
-    { email: 'demo@admybrand.com', password: 'demo123', role: 'Demo' }
+    { email: 'demo@admybrand.com', password: 'demo123', role: 'Demo Admin' }
   ];
 
   return (
@@ -61,8 +84,10 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+          <Alert variant="destructive" className="border-2 border-red-500 bg-red-50 dark:bg-red-950">
+            <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -76,7 +101,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
           ))}
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleFormSubmit} className="space-y-4" noValidate>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -84,7 +109,8 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
               type="email"
               placeholder="Enter your email"
               {...register('email')}
-              disabled={isSubmitting || isLoading}
+              disabled={isSubmittingForm}
+              autoComplete="email"
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -99,7 +125,8 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
                 {...register('password')}
-                disabled={isSubmitting || isLoading}
+                disabled={isSubmittingForm}
+                autoComplete="current-password"
               />
               <Button
                 type="button"
@@ -107,7 +134,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
                 size="sm"
                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                 onClick={() => setShowPassword(!showPassword)}
-                disabled={isSubmitting || isLoading}
+                disabled={isSubmittingForm}
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -124,9 +151,9 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
           <Button
             type="submit"
             className="w-full"
-            disabled={isSubmitting || isLoading}
+            disabled={isSubmittingForm}
           >
-            {isSubmitting || isLoading ? (
+            {isSubmittingForm ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Signing in...
@@ -144,7 +171,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
           <Button
             variant="link"
             onClick={onSwitchToSignup}
-            disabled={isSubmitting || isLoading}
+            disabled={isSubmittingForm}
             className="text-sm"
           >
             Don't have an account? Sign up

@@ -9,8 +9,11 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const { isAuthenticated, isLoading } = useAuth();
 
+  console.log('🔍 AuthPage - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
+
   // Show loading spinner while checking authentication
   if (isLoading) {
+    console.log('⏳ AuthPage - Showing loading spinner');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/5 to-accent/5">
         <div className="text-center">
@@ -23,8 +26,11 @@ export default function AuthPage() {
 
   // Redirect to dashboard if already authenticated
   if (isAuthenticated) {
+    console.log('✅ AuthPage - User is authenticated, redirecting to dashboard');
     return <Navigate to="/" replace />;
   }
+
+  console.log('📝 AuthPage - Showing auth form');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/5 to-accent/5 p-4">
