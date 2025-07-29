@@ -13,17 +13,35 @@ interface ConversionsChartProps {
   height?: number;
 }
 
+// LocalStorage key for chart data
+const CHART_DATA_STORAGE_KEY = 'admybrand_chart_data';
+
+// Load chart data from localStorage
+const loadChartDataFromStorage = (): ConversionDataPoint[] => {
+  try {
+    const stored = localStorage.getItem(CHART_DATA_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.warn('Failed to load chart data from localStorage:', error);
+  }
+  
+  // Return default data if no stored data exists
+  return [
+    { campaign: 'Summer Sale', conversions: 234, color: '#3b82f6' },
+    { campaign: 'Brand Awareness', conversions: 186, color: '#10b981' },
+    { campaign: 'Product Launch', conversions: 175, color: '#f59e0b' },
+    { campaign: 'Holiday', conversions: 98, color: '#ef4444' },
+    { campaign: 'Retargeting', conversions: 156, color: '#8b5cf6' },
+  ];
+};
+
 // Default mock data for campaign conversions
-const defaultData: ConversionDataPoint[] = [
-  { campaign: 'Summer Sale', conversions: 234, color: '#3b82f6' },
-  { campaign: 'Brand Awareness', conversions: 186, color: '#10b981' },
-  { campaign: 'Product Launch', conversions: 175, color: '#f59e0b' },
-  { campaign: 'Holiday', conversions: 98, color: '#ef4444' },
-  { campaign: 'Retargeting', conversions: 156, color: '#8b5cf6' },
-];
+const defaultData: ConversionDataPoint[] = loadChartDataFromStorage();
 
 export function ConversionsChart({ data = defaultData, height = 200 }: ConversionsChartProps) {
-  const [chartData, setChartData] = useState<ConversionDataPoint[]>(data);
+  const [chartData, setChartData] = useState<ConversionDataPoint[]>(() => loadChartDataFromStorage());
   const [initialized, setInitialized] = useState(false);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastUpdateRef = useRef<number>(0);
@@ -141,6 +159,38 @@ export function ConversionsChart({ data = defaultData, height = 200 }: Conversio
       }
     };
   }, [initialized, debouncedUpdate, chartData]);
+
+  // Listen for localStorage changes to update chart when new campaigns are added
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === CHART_DATA_STORAGE_KEY && e.newValue) {
+        try {
+          const updatedChartData = JSON.parse(e.newValue);
+          debouncedUpdate(updatedChartData);
+        } catch (error) {
+          console.warn('Failed to parse chart data from storage event:', error);
+        }
+      }
+    };
+
+    // Also check for direct localStorage updates (same tab)
+    const checkForUpdates = () => {
+      const currentData = loadChartDataFromStorage();
+      if (JSON.stringify(currentData) !== JSON.stringify(chartData)) {
+        debouncedUpdate(currentData);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Check for updates every 3 seconds (for same-tab updates)
+    const interval = setInterval(checkForUpdates, 3000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [debouncedUpdate, chartData]);
 
   const formatCampaignName = (name: string) => {
     return name.length > 10 ? name.substring(0, 10) + '...' : name;

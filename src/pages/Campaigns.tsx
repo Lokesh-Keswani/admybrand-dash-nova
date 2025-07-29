@@ -7,14 +7,23 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { Download, Search, Filter, Plus, Wifi, WifiOff, Calendar } from "lucide-react";
+import { Download, Search, Filter, Plus, Wifi, WifiOff, Calendar, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWebSocket } from "@/services/websocket";
 import { useToast } from "@/hooks/use-toast";
 
 // LocalStorage key for campaigns
 const CAMPAIGNS_STORAGE_KEY = 'admybrand_campaigns';
+const CHART_DATA_STORAGE_KEY = 'admybrand_chart_data';
+
+// Chart data interface
+interface ChartDataPoint {
+  campaign: string;
+  conversions: number;
+  color: string;
+}
 
 // LocalStorage utility functions
 const saveCampaignsToStorage = (campaigns: Campaign[]) => {
@@ -37,10 +46,67 @@ const loadCampaignsFromStorage = (): Campaign[] | null => {
   return null;
 };
 
+// Chart data utility functions
+const saveChartDataToStorage = (chartData: ChartDataPoint[]) => {
+  try {
+    localStorage.setItem(CHART_DATA_STORAGE_KEY, JSON.stringify(chartData));
+  } catch (error) {
+    console.warn('Failed to save chart data to localStorage:', error);
+  }
+};
+
+const loadChartDataFromStorage = (): ChartDataPoint[] | null => {
+  try {
+    const stored = localStorage.getItem(CHART_DATA_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.warn('Failed to load chart data from localStorage:', error);
+  }
+  return null;
+};
+
+// Generate mock chart data for a campaign
+const generateCampaignChartData = (campaignName: string, budget?: number): ChartDataPoint => {
+  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#84cc16'];
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+  
+  // Generate realistic conversion numbers based on campaign budget and type
+  let baseConversions = Math.floor(Math.random() * 200) + 50; // 50-250 conversions
+  
+  // If budget is provided, scale conversions based on budget
+  if (budget) {
+    // Higher budget = more conversions (roughly 1 conversion per $500 budget)
+    const budgetMultiplier = Math.sqrt(budget / 10000); // Square root for diminishing returns
+    baseConversions = Math.floor(baseConversions * budgetMultiplier);
+  }
+  
+  // Add campaign type-based adjustments
+  const lowerName = campaignName.toLowerCase();
+  if (lowerName.includes('sale') || lowerName.includes('discount')) {
+    baseConversions = Math.floor(baseConversions * 1.3); // Sales perform better
+  } else if (lowerName.includes('awareness') || lowerName.includes('brand')) {
+    baseConversions = Math.floor(baseConversions * 0.7); // Brand awareness has lower conversions
+  } else if (lowerName.includes('retargeting') || lowerName.includes('remarketing')) {
+    baseConversions = Math.floor(baseConversions * 1.1); // Retargeting performs well
+  }
+  
+  const variation = Math.floor(Math.random() * 50) - 25; // ±25 variation
+  const conversions = Math.max(10, baseConversions + variation);
+  
+  return {
+    campaign: campaignName,
+    conversions,
+    color: randomColor
+  };
+};
+
 const clearCampaignsFromStorage = () => {
   try {
     localStorage.removeItem(CAMPAIGNS_STORAGE_KEY);
-    console.log('Campaigns cleared from localStorage');
+    localStorage.removeItem(CHART_DATA_STORAGE_KEY);
+    console.log('Campaigns and chart data cleared from localStorage');
   } catch (error) {
     console.warn('Failed to clear campaigns from localStorage:', error);
   }
@@ -159,6 +225,10 @@ export default function Campaigns() {
     status: 'active'
   });
   
+  // Delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [campaignToDelete, setCampaignToDelete] = useState<{id: string, name: string} | null>(null);
+  
   const { toast } = useToast();
 
   // Custom function to update campaigns and save to localStorage
@@ -171,6 +241,22 @@ export default function Campaigns() {
   };
 
   const { isConnected, subscribe, on } = useWebSocket();
+
+  // Initialize chart data on first load
+  useEffect(() => {
+    const existingChartData = loadChartDataFromStorage();
+    if (!existingChartData) {
+      // Initialize with default chart data for sample campaigns
+      const defaultChartData: ChartDataPoint[] = [
+        { campaign: 'Summer Sale 2024', conversions: 234, color: '#3b82f6' },
+        { campaign: 'Brand Awareness Q3', conversions: 186, color: '#10b981' },
+        { campaign: 'Product Launch', conversions: 175, color: '#f59e0b' },
+        { campaign: 'Holiday Campaign', conversions: 98, color: '#ef4444' },
+        { campaign: 'Retargeting', conversions: 156, color: '#8b5cf6' },
+      ];
+      saveChartDataToStorage(defaultChartData);
+    }
+  }, []);
 
   // Backup: Save campaigns to localStorage whenever campaigns state changes
   useEffect(() => {
@@ -737,27 +823,47 @@ ROAS: ${campaign.roas}x
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
 
+      // Generate realistic mock performance data
+      const budget = parseFloat(newCampaign.budget);
+      const spent = Math.floor(budget * (0.1 + Math.random() * 0.3)); // 10-40% of budget spent so far
+      const impressions = Math.floor(budget * (0.5 + Math.random() * 1.5)); // Impressions scale with budget
+      const clicks = Math.floor(impressions * (0.01 + Math.random() * 0.03)); // 1-4% CTR
+      const conversions = Math.floor(clicks * (0.02 + Math.random() * 0.08)); // 2-10% conversion rate
+      const ctr = clicks > 0 ? parseFloat(((clicks / impressions) * 100).toFixed(1)) : 0;
+      const conversionRate = clicks > 0 ? parseFloat(((conversions / clicks) * 100).toFixed(1)) : 0;
+      const costPerClick = clicks > 0 ? parseFloat((spent / clicks).toFixed(2)) : 0;
+      const costPerConversion = conversions > 0 ? parseFloat((spent / conversions).toFixed(2)) : 0;
+      const revenue = conversions * (50 + Math.random() * 200); // $50-250 per conversion
+      const roas = spent > 0 ? parseFloat((revenue / spent).toFixed(1)) : 0;
+
       const newCampaignData: Campaign = {
         id: `campaign_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: newCampaign.name,
         status: newCampaign.status as any,
         startDate: newCampaign.startDate,
         endDate: newCampaign.endDate,
-        budget: parseFloat(newCampaign.budget),
-        spent: 0,
-        impressions: 0,
-        clicks: 0,
-        conversions: 0,
-        ctr: 0,
-        conversionRate: 0,
-        costPerClick: 0,
-        costPerConversion: 0,
-        roas: 0,
+        budget,
+        spent,
+        impressions,
+        clicks,
+        conversions,
+        ctr,
+        conversionRate,
+        costPerClick,
+        costPerConversion,
+        roas,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
       updateCampaigns(prev => [newCampaignData, ...prev]);
+      
+      // Generate and save chart data for the new campaign
+      const currentChartData = loadChartDataFromStorage() || [];
+      const newChartData = generateCampaignChartData(newCampaign.name, parseFloat(newCampaign.budget));
+      const updatedChartData = [newChartData, ...currentChartData].slice(0, 8); // Keep only top 8 campaigns
+      saveChartDataToStorage(updatedChartData);
+      
       setShowNewCampaignDialog(false);
       setNewCampaign({
         name: '',
@@ -769,12 +875,51 @@ ROAS: ${campaign.roas}x
 
       toast({
         title: "Campaign Created",
-        description: `${newCampaign.name} has been created and saved locally. It will persist across page refreshes.`,
+        description: `${newCampaign.name} has been created with realistic performance metrics and will appear in dashboard charts.`,
       });
     } catch (error) {
       toast({
         title: "Creation Failed",
         description: "Failed to create campaign. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Open delete confirmation dialog
+  const openDeleteDialog = (campaignId: string, campaignName: string) => {
+    setCampaignToDelete({ id: campaignId, name: campaignName });
+    setDeleteDialogOpen(true);
+  };
+
+  // Handle deleting a campaign
+  const handleDeleteCampaign = async () => {
+    if (!campaignToDelete) return;
+
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Remove campaign from campaigns list
+      updateCampaigns(prev => prev.filter(campaign => campaign.id !== campaignToDelete.id));
+      
+      // Remove campaign from chart data
+      const currentChartData = loadChartDataFromStorage() || [];
+      const updatedChartData = currentChartData.filter(item => item.campaign !== campaignToDelete.name);
+      saveChartDataToStorage(updatedChartData);
+
+      toast({
+        title: "Campaign Deleted",
+        description: `${campaignToDelete.name} has been deleted successfully.`,
+      });
+
+      // Close dialog and reset state
+      setDeleteDialogOpen(false);
+      setCampaignToDelete(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete campaign. Please try again.",
         variant: "destructive",
       });
     }
@@ -970,6 +1115,7 @@ ROAS: ${campaign.roas}x
                 <TableHead className="text-muted-foreground">CTR</TableHead>
                 <TableHead className="text-muted-foreground">Conversions</TableHead>
                 <TableHead className="text-muted-foreground">ROAS</TableHead>
+                <TableHead className="text-muted-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1002,10 +1148,20 @@ ROAS: ${campaign.roas}x
                       {campaign.roas}x
                     </div>
                   </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openDeleteDialog(campaign.id, campaign.name)}
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               )) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     {loading ? "Loading campaigns..." : 
                      search || statusFilter !== "all" ? 
                      "No campaigns match your filters" : 
@@ -1110,6 +1266,33 @@ ROAS: ${campaign.roas}x
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{campaignToDelete?.name}"? This action cannot be undone and will remove the campaign from all charts and reports.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteDialogOpen(false);
+              setCampaignToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteCampaign}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Campaign
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

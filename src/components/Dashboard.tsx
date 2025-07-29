@@ -139,9 +139,24 @@ export function Dashboard() {
       }
     };
 
+    // Also check for direct localStorage updates (same tab)
+    const checkForCampaignUpdates = () => {
+      const storedCampaigns = loadCampaignsFromStorage();
+      if (storedCampaigns && JSON.stringify(storedCampaigns) !== JSON.stringify(campaigns)) {
+        setCampaigns(storedCampaigns);
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    
+    // Check for updates every 2 seconds (for same-tab updates)
+    const interval = setInterval(checkForCampaignUpdates, 2000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [campaigns]);
 
   // Listen for connection status events
   useEffect(() => {
