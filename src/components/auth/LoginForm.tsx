@@ -37,18 +37,14 @@ export function LoginForm({ onSwitchToSignup, error, setError }: LoginFormProps)
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log('🔐 LoginForm: Form submitted with data:', { ...data, password: '***' });
     setError('');
     setIsSubmittingForm(true);
     
     try {
-      console.log('🔐 LoginForm: Calling login function...');
       // Call login function from AuthContext
       const result = await login(data.email, data.password);
-      console.log('🔐 LoginForm: Login result:', result);
       
       if (!result.success) {
-        console.log('❌ LoginForm: Login failed, setting error:', result.error);
         // Show error message without affecting global loading state
         const errorMessage = result.error || 'Invalid Email or Password';
         setError(errorMessage);
@@ -57,10 +53,8 @@ export function LoginForm({ onSwitchToSignup, error, setError }: LoginFormProps)
         return;
       }
       
-      console.log('✅ LoginForm: Login successful, should redirect');
       // Success - AuthContext will handle redirect
     } catch (error) {
-      console.error('❌ LoginForm: Login error:', error);
       setError('An unexpected error occurred. Please try again.');
       setIsSubmittingForm(false);
     }

@@ -23,7 +23,7 @@ class WebSocketService {
       return;
     }
 
-    console.log('🔌 Connecting to WebSocket server...');
+
     
     // Reset reconnect attempts when manually connecting
     this.reconnectAttempts = 0;
@@ -49,7 +49,6 @@ class WebSocketService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('✅ WebSocket connected');
       this.reconnectAttempts = 0;
       
       // Emit connection success to subscribers
@@ -57,18 +56,15 @@ class WebSocketService {
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('❌ WebSocket disconnected:', reason);
       this.emit('connection', { status: 'disconnected', reason, timestamp: new Date().toISOString() });
     });
 
     this.socket.on('reconnect', (attemptNumber) => {
-      console.log('✅ WebSocket reconnected after', attemptNumber, 'attempts');
       this.reconnectAttempts = 0;
       this.emit('connection', { status: 'reconnected', attemptNumber, timestamp: new Date().toISOString() });
     });
 
     this.socket.on('reconnecting', (attemptNumber) => {
-      console.log('🔄 WebSocket reconnecting... attempt', attemptNumber);
       this.emit('connection', { status: 'reconnecting', attemptNumber, timestamp: new Date().toISOString() });
     });
 
@@ -89,37 +85,30 @@ class WebSocketService {
 
     // Real-time data events
     this.socket.on('initial-data', (data) => {
-      console.log('📊 Received initial data');
       this.emit('initial-data', data);
     });
 
     this.socket.on('real-time-update', (data) => {
-      console.log('🔄 Real-time update received');
       this.emit('real-time-update', data);
     });
 
     this.socket.on('metrics-update', (data) => {
-      console.log('📈 Metrics update received');
       this.emit('metrics-update', data);
     });
 
     this.socket.on('campaigns-update', (data) => {
-      console.log('🎯 Campaign update received');
       this.emit('campaigns-update', data);
     });
 
     this.socket.on('analytics-update', (data) => {
-      console.log('📊 Analytics update received');
       this.emit('analytics-update', data);
     });
 
     this.socket.on('alerts-update', (data) => {
-      console.log('🚨 Alerts update received');
       this.emit('alerts-update', data);
     });
 
     this.socket.on('manual-update', (data) => {
-      console.log('🔧 Manual update received');
       this.emit('manual-update', data);
     });
   }
@@ -127,12 +116,10 @@ class WebSocketService {
   // Handle reconnection logic
   private handleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('❌ Max reconnection attempts reached');
       return;
     }
 
     this.reconnectAttempts++;
-    console.log(`🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
     
     setTimeout(() => {
       this.connect();
@@ -146,7 +133,6 @@ class WebSocketService {
       return;
     }
 
-    console.log(`📡 Subscribing to ${dataType} updates`);
     this.socket.emit('subscribe', dataType);
   }
 
@@ -156,7 +142,6 @@ class WebSocketService {
       return;
     }
 
-    console.log(`📡 Unsubscribing from ${dataType} updates`);
     this.socket.emit('unsubscribe', dataType);
   }
 
@@ -212,7 +197,6 @@ class WebSocketService {
 
   // Force reconnection
   forceReconnect(): void {
-    console.log('🔄 Forcing WebSocket reconnection...');
     if (this.socket) {
       this.socket.disconnect();
     }
@@ -226,7 +210,6 @@ class WebSocketService {
   // Disconnect
   disconnect(): void {
     if (this.socket) {
-      console.log('🔌 Disconnecting WebSocket...');
       this.socket.disconnect();
       this.socket = null;
     }

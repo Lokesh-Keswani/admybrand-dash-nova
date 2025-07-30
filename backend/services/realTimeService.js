@@ -5,12 +5,9 @@ let connectedClients = 0;
 
 // Initialize real-time updates
 export const initializeRealTimeUpdates = (io) => {
-  console.log('🔴 Real-time service initialized');
-
   // Track connections
   io.on('connection', (socket) => {
     connectedClients++;
-    console.log(`📊 Client connected. Total clients: ${connectedClients}`);
 
     // Send current real-time data immediately
     socket.emit('initial-data', {
@@ -30,7 +27,6 @@ export const initializeRealTimeUpdates = (io) => {
     // Handle client subscription to specific data streams
     socket.on('subscribe', (dataType) => {
       socket.join(dataType);
-      console.log(`📈 Client subscribed to ${dataType} updates`);
 
       // Send current data immediately for the subscribed stream
       switch (dataType) {
@@ -67,13 +63,11 @@ export const initializeRealTimeUpdates = (io) => {
     // Handle unsubscription
     socket.on('unsubscribe', (dataType) => {
       socket.leave(dataType);
-      console.log(`📉 Client unsubscribed from ${dataType} updates`);
     });
 
     // Handle disconnection
     socket.on('disconnect', () => {
       connectedClients--;
-      console.log(`📊 Client disconnected. Total clients: ${connectedClients}`);
     });
   });
 
@@ -106,7 +100,7 @@ const startRealTimeUpdates = (io) => {
 
       // Log every 20th update (every minute)
       if (Math.random() < 0.05) {
-        console.log(`🔄 Real-time update sent to ${connectedClients} clients - Revenue: $${updatedMetrics.totalRevenue.toFixed(2)}`);
+        // Real-time update sent
       }
     }
   }, 3000); // 3 second intervals for smooth updates without overwhelming
@@ -128,7 +122,7 @@ const startRealTimeUpdates = (io) => {
       io.to('campaigns').emit('campaigns-update', campaignUpdate);
       // Very minimal logging
       if (Math.random() < 0.1) {
-        console.log('📈 Campaign update sent to subscribed clients');
+        // Campaign update sent
       }
     }
   }, 120000); // 2 minute intervals
@@ -143,12 +137,10 @@ const startRealTimeUpdates = (io) => {
           alerts,
           timestamp: new Date().toISOString()
         });
-        console.log(`🚨 ${alerts.length} alerts sent to clients`);
+        // Alerts sent to clients
       }
     }
   }, 120000); // 2 minute intervals
-
-  console.log('⏰ Real-time update intervals started');
 };
 
 // Generate random alerts for demo purposes
@@ -208,7 +200,6 @@ export const stopRealTimeUpdates = () => {
   if (updateInterval) {
     clearInterval(updateInterval);
     updateInterval = null;
-    console.log('⏹️ Real-time updates stopped');
   }
 };
 
@@ -229,7 +220,6 @@ export const triggerManualUpdate = (io, data) => {
       timestamp: new Date().toISOString(),
       type: 'manual-trigger'
     });
-    console.log('🔧 Manual update triggered');
     return true;
   }
   return false;

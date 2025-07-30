@@ -67,7 +67,7 @@ export default function Analytics() {
       const metricsResponse = await analyticsAPI.getMetrics();
 
       if (metricsResponse.success) {
-        console.log('Analytics data loaded successfully');
+        // Analytics data loaded successfully
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'API not available - showing sample data');

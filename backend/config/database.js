@@ -113,24 +113,17 @@ const connectDB = async () => {
     
     const conn = await mongoose.connect(mongoURI);
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    
     // Create demo user if it doesn't exist
     await createDemoUser();
     
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
-    console.log('🔄 Falling back to mock database for demo purposes...');
-    
     // Set up mock User model
     global.MockUser = createMockUserModel();
     
     // Create demo user in mock data
     if (!mockUsers.find(u => u.email === 'demo@admybrand.com')) {
       mockUsers.push(createMockUser());
-      console.log('✅ Demo user created in mock database: demo@admybrand.com / demo123');
-    } else {
-      console.log('✅ Demo user already exists in mock database: demo@admybrand.com / demo123');
     }
   }
 };
@@ -153,9 +146,6 @@ const createDemoUser = async () => {
       });
       
       await demoUser.save();
-      console.log('✅ Demo user created: demo@admybrand.com / demo123');
-    } else {
-      console.log('✅ Demo user already exists: demo@admybrand.com / demo123');
     }
   } catch (error) {
     console.error('❌ Error creating demo user:', error.message);

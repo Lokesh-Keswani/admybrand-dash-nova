@@ -34,16 +34,9 @@ router.post('/signup', [
     .withMessage('Password must be at least 6 characters long')
 ], async (req, res) => {
   try {
-    console.log('🔗 Backend: Signup request received:', { 
-      name: req.body.name, 
-      email: req.body.email, 
-      password: '***' 
-    });
-    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('❌ Backend: Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -57,18 +50,14 @@ router.post('/signup', [
     const UserModel = getCurrentUserModel();
     const existingUser = await UserModel.findByEmail(email);
     if (existingUser) {
-      console.log('❌ Backend: User already exists:', email);
       return res.status(400).json({
         success: false,
         message: 'User with this email already exists'
       });
     }
 
-    console.log('✅ Backend: User does not exist, proceeding with creation');
-
     // Check if we're using mock data
     const isUsingMockData = global.MockUser !== undefined;
-    console.log('🔧 Backend: Using mock data:', isUsingMockData);
     
     if (isUsingMockData) {
       // Create mock user
@@ -110,12 +99,6 @@ router.post('/signup', [
       // Generate token
       const token = generateToken(mockUser._id);
       
-      console.log('✅ Backend: Mock user created successfully:', {
-        id: mockUser._id,
-        email: mockUser.email,
-        name: mockUser.name
-      });
-      
       res.status(201).json({
         success: true,
         message: 'User created successfully',
@@ -144,12 +127,6 @@ router.post('/signup', [
       // Set last login
       user.lastLogin = new Date();
       await user.save();
-
-      console.log('✅ Backend: MongoDB user created successfully:', {
-        id: user._id,
-        email: user.email,
-        name: user.name
-      });
 
       res.status(201).json({
         success: true,

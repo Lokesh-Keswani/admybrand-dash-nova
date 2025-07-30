@@ -98,15 +98,8 @@ app.use('/api/export', exportRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`);
-  
   socket.on('subscribe-to-updates', (room) => {
     socket.join(room);
-    console.log(`Client ${socket.id} subscribed to ${room}`);
-  });
-  
-  socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
   });
 });
 
@@ -128,7 +121,5 @@ app.use('*', (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`🚀 ADmyBRAND Analytics API Server running on port ${PORT}`);
-  console.log(`📊 Dashboard API: http://localhost:${PORT}/api`);
-  console.log(`🔗 Health Check: http://localhost:${PORT}/health`);
+  // Server started successfully
 }); 

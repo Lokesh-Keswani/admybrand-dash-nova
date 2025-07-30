@@ -35,7 +35,7 @@ export function SignupForm({ onSwitchToLogin, error, setError }: SignupFormProps
 
   // Debug error state changes
   useEffect(() => {
-    console.log('📝 SignupForm: Error state changed to:', error);
+    // Removed console.log
   }, [error]);
 
   const {
@@ -47,21 +47,12 @@ export function SignupForm({ onSwitchToLogin, error, setError }: SignupFormProps
   });
 
   const onSubmit = async (data: SignupFormData) => {
-    console.log('📝 SignupForm: Form submitted with data:', { ...data, password: '***' });
-    console.log('📝 SignupForm: Current error state before clearing:', error);
     setError('');
-    console.log('📝 SignupForm: Error state cleared');
     
-    console.log('📝 SignupForm: Calling signup function...');
     const result = await signup(data.name, data.email, data.password);
-    console.log('📝 SignupForm: Signup result:', result);
     
     if (!result.success) {
-      console.log('❌ SignupForm: Signup failed, setting error:', result.error);
       setError(result.error || 'Signup failed');
-      console.log('📝 SignupForm: Error state set to:', result.error);
-    } else {
-      console.log('✅ SignupForm: Signup successful, should redirect');
     }
   };
 

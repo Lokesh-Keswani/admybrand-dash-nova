@@ -107,7 +107,6 @@ const clearCampaignsFromStorage = () => {
   try {
     localStorage.removeItem(CAMPAIGNS_STORAGE_KEY);
     localStorage.removeItem(CHART_DATA_STORAGE_KEY);
-    console.log('Campaigns and chart data cleared from localStorage');
   } catch (error) {
     console.warn('Failed to clear campaigns from localStorage:', error);
   }
