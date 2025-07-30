@@ -1029,54 +1029,54 @@ ROAS: ${campaign.roas}x
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button 
-              onClick={handleExportCSV} 
-              variant="outline" 
-              size="sm"
-              disabled={downloadingCSV}
+          <Button 
+            onClick={handleExportCSV} 
+            variant="outline" 
+            size="sm"
+            disabled={downloadingCSV}
               className="h-8 text-xs sm:h-9 sm:text-sm"
-            >
-              {downloadingCSV ? (
-                <>
+          >
+            {downloadingCSV ? (
+              <>
                   <div className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   <span className="hidden sm:inline">Exporting...</span>
                   <span className="sm:hidden">...</span>
-                </>
-              ) : (
-                <>
+              </>
+            ) : (
+              <>
                   <FileText className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                   <span className="hidden sm:inline">CSV</span>
-                </>
-              )}
-            </Button>
-            <Button 
-              onClick={handleExportPDF} 
-              variant="outline" 
-              size="sm"
-              disabled={downloadingPDF}
+              </>
+            )}
+          </Button>
+          <Button 
+            onClick={handleExportPDF} 
+            variant="outline" 
+            size="sm"
+            disabled={downloadingPDF}
               className="h-8 text-xs sm:h-9 sm:text-sm"
-            >
-              {downloadingPDF ? (
-                <>
+          >
+            {downloadingPDF ? (
+              <>
                   <div className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   <span className="hidden sm:inline">Generating...</span>
                   <span className="sm:hidden">...</span>
-                </>
-              ) : (
-                <>
+              </>
+            ) : (
+              <>
                   <FileDown className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                   <span className="hidden sm:inline">PDF</span>
-                </>
-              )}
-            </Button>
-            <Button 
+              </>
+            )}
+          </Button>
+          <Button 
               className="bg-gradient-primary h-8 text-xs sm:h-9 sm:text-sm"
-              onClick={() => setShowNewCampaignDialog(true)}
-            >
+            onClick={() => setShowNewCampaignDialog(true)}
+          >
               <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
               <span className="hidden sm:inline">New Campaign</span>
               <span className="sm:hidden">New</span>
-            </Button>
+          </Button>
           </div>
         </div>
       </div>
@@ -1117,38 +1117,38 @@ ROAS: ${campaign.roas}x
               </div>
             </div>
             <div className="flex flex-wrap gap-2 sm:gap-3">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-32 sm:w-[140px] text-sm">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="paused">Paused</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-32 sm:w-[140px] text-sm">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="budget">Budget</SelectItem>
-                  <SelectItem value="spent">Spent</SelectItem>
-                  <SelectItem value="roas">ROAS</SelectItem>
-                  <SelectItem value="updatedAt">Updated</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="budget">Budget</SelectItem>
+                <SelectItem value="spent">Spent</SelectItem>
+                <SelectItem value="roas">ROAS</SelectItem>
+                <SelectItem value="updatedAt">Updated</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
                 <SelectTrigger className="w-20 sm:w-[100px] text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="desc">Desc</SelectItem>
-                  <SelectItem value="asc">Asc</SelectItem>
-                </SelectContent>
-              </Select>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">Desc</SelectItem>
+                <SelectItem value="asc">Asc</SelectItem>
+              </SelectContent>
+            </Select>
             </div>
           </div>
         </CardContent>
@@ -1288,9 +1288,9 @@ ROAS: ${campaign.roas}x
 
           {/* Desktop Table View */}
           <div className="hidden lg:block overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-glass-border">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-glass-border">
                   <TableHead className="text-muted-foreground text-sm">Campaign</TableHead>
                   <TableHead className="text-muted-foreground text-sm">Status</TableHead>
                   <TableHead className="text-muted-foreground text-sm">Budget</TableHead>
@@ -1301,45 +1301,45 @@ ROAS: ${campaign.roas}x
                   <TableHead className="text-muted-foreground text-sm">Conversions</TableHead>
                   <TableHead className="text-muted-foreground text-sm">ROAS</TableHead>
                   <TableHead className="text-muted-foreground text-sm">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCampaigns && filteredCampaigns.length > 0 ? filteredCampaigns.map((campaign) => (
-                  <TableRow key={campaign.id} className="border-glass-border hover:bg-muted/50">
-                    <TableCell className="font-medium text-foreground">
-                      <div>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCampaigns && filteredCampaigns.length > 0 ? filteredCampaigns.map((campaign) => (
+                <TableRow key={campaign.id} className="border-glass-border hover:bg-muted/50">
+                  <TableCell className="font-medium text-foreground">
+                    <div>
                         <div className="font-medium text-sm">{campaign.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {campaign.startDate} - {campaign.endDate}
-                        </div>
+                      <div className="text-xs text-muted-foreground">
+                        {campaign.startDate} - {campaign.endDate}
                       </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(campaign.status)}</TableCell>
+                    </div>
+                  </TableCell>
+                  <TableCell>{getStatusBadge(campaign.status)}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{formatCurrency(campaign.budget)}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      <div>
+                  <TableCell className="text-muted-foreground">
+                    <div>
                         <div className="text-sm">{formatCurrency(campaign.spent)}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {((campaign.spent / campaign.budget) * 100).toFixed(1)}% used
-                        </div>
+                      <div className="text-xs text-muted-foreground">
+                        {((campaign.spent / campaign.budget) * 100).toFixed(1)}% used
                       </div>
-                    </TableCell>
+                    </div>
+                  </TableCell>
                     <TableCell className="text-muted-foreground text-sm">{formatNumber(campaign.impressions)}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{formatNumber(campaign.clicks)}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{campaign.ctr}%</TableCell>
                     <TableCell className="font-medium text-foreground text-sm">{campaign.conversions}</TableCell>
-                    <TableCell className="font-medium text-foreground">
+                  <TableCell className="font-medium text-foreground">
                       <div className={`font-medium text-sm ${campaign.roas >= 3 ? 'text-green-500' : campaign.roas >= 2 ? 'text-yellow-500' : 'text-red-500'}`}>
-                        {campaign.roas}x
-                      </div>
-                    </TableCell>
-                    <TableCell>
+                      {campaign.roas}x
+                    </div>
+                  </TableCell>
+                  <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
                             <span className="sr-only">Open menu</span>
                             <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                    </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-background/90 border-glass-border shadow-2xl backdrop-blur-xl">
                           <DropdownMenuItem onClick={() => handleExportCampaignCSV(campaign.id)} className="hover:bg-sidebar-accent/50">
@@ -1356,20 +1356,20 @@ ROAS: ${campaign.roas}x
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )) : (
-                  <TableRow>
+                  </TableCell>
+                </TableRow>
+              )) : (
+                <TableRow>
                     <TableCell colSpan={10} className="text-center text-muted-foreground py-8 text-sm">
-                      {loading ? "Loading campaigns..." : 
-                       search || statusFilter !== "all" ? 
-                       "No campaigns match your filters" : 
-                       "No campaigns found"}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                    {loading ? "Loading campaigns..." : 
+                     search || statusFilter !== "all" ? 
+                     "No campaigns match your filters" : 
+                     "No campaigns found"}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
           </div>
         </CardContent>
       </Card>
@@ -1480,8 +1480,8 @@ ROAS: ${campaign.roas}x
           <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
             <AlertDialogCancel 
               onClick={() => {
-                setDeleteDialogOpen(false);
-                setCampaignToDelete(null);
+              setDeleteDialogOpen(false);
+              setCampaignToDelete(null);
               }}
               className="mt-0"
             >

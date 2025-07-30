@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
 // WebSocket configuration
-const WEBSOCKET_URL = 'http://localhost:3001';
+const WEBSOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
 
 class WebSocketService {
   private socket: Socket | null = null;
