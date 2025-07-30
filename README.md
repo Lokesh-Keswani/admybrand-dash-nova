@@ -105,7 +105,7 @@ The dashboard is fully responsive and optimized for:
 
 3. **Start the development server**
    ```bash
-   npm run dev
+npm run dev
    # or
    yarn dev
    # or
@@ -296,3 +296,286 @@ If you have any questions or need support:
 ---
 
 **Made with ❤️ by the AdMyBrand Team**
+
+## 🚀 Deployment
+
+### **Vercel Deployment** (Recommended)
+
+Vercel is the recommended deployment platform for this React application due to its excellent performance and developer experience.
+
+#### **Option 1: Deploy via Vercel CLI**
+
+1. **Install Vercel CLI**
+   ```bash
+   npm install -g vercel
+   ```
+
+2. **Login to Vercel**
+   ```bash
+   vercel login
+   ```
+
+3. **Deploy from project directory**
+   ```bash
+   cd admybrand-dash-nova
+   vercel
+   ```
+
+4. **Follow the prompts**
+   - Set up and deploy? `Y`
+   - Which scope? Select your account
+   - Link to existing project? `N`
+   - Project name: `admybrand-dashboard` (or your preferred name)
+   - Directory: `./` (current directory)
+   - Override settings? `N`
+
+5. **Your app will be deployed!**
+   - Production URL: `https://your-project.vercel.app`
+   - Preview deployments for each commit
+
+#### **Option 2: Deploy via GitHub Integration**
+
+1. **Push your code to GitHub**
+   ```bash
+   git add .
+   git commit -m "Initial commit"
+   git push origin main
+   ```
+
+2. **Connect to Vercel**
+   - Go to [vercel.com](https://vercel.com)
+   - Sign up/Login with GitHub
+   - Click "New Project"
+   - Import your GitHub repository
+
+3. **Configure deployment**
+   - Framework Preset: `Vite`
+   - Root Directory: `./` (leave empty)
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Install Command: `npm install`
+
+4. **Environment Variables** (if needed)
+   ```env
+   VITE_API_URL=your_api_url_here
+   VITE_WS_URL=your_websocket_url_here
+   ```
+
+5. **Deploy**
+   - Click "Deploy"
+   - Your app will be live in minutes!
+
+#### **Vercel Configuration File**
+
+Create a `vercel.json` file in your project root for custom configuration:
+
+```json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### **Netlify Deployment**
+
+Netlify is another excellent option for deploying React applications with great performance and features.
+
+#### **Option 1: Deploy via Netlify CLI**
+
+1. **Install Netlify CLI**
+   ```bash
+   npm install -g netlify-cli
+   ```
+
+2. **Login to Netlify**
+   ```bash
+   netlify login
+   ```
+
+3. **Build your project**
+   ```bash
+   npm run build
+   ```
+
+4. **Deploy to Netlify**
+   ```bash
+   netlify deploy --prod --dir=dist
+   ```
+
+5. **Follow the prompts**
+   - Create & configure a new site? `Y`
+   - Team: Select your team
+   - Site name: `admybrand-dashboard` (or your preferred name)
+
+#### **Option 2: Deploy via Netlify UI**
+
+1. **Build your project**
+   ```bash
+   npm run build
+   ```
+
+2. **Drag & Drop Deployment**
+   - Go to [netlify.com](https://netlify.com)
+   - Sign up/Login
+   - Drag your `dist` folder to the deploy area
+   - Your site will be live instantly!
+
+3. **Git Integration**
+   - Connect your GitHub repository
+   - Automatic deployments on every push
+   - Preview deployments for pull requests
+
+#### **Netlify Configuration File**
+
+Create a `netlify.toml` file in your project root:
+
+```toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+```
+
+### **Environment Variables Setup**
+
+For both platforms, set up environment variables in their respective dashboards:
+
+#### **Vercel Environment Variables**
+1. Go to your project dashboard
+2. Navigate to Settings → Environment Variables
+3. Add your variables:
+   ```
+   VITE_API_URL=https://your-api.com
+   VITE_WS_URL=wss://your-websocket.com
+   ```
+
+#### **Netlify Environment Variables**
+1. Go to your site dashboard
+2. Navigate to Site settings → Environment variables
+3. Add your variables:
+   ```
+   VITE_API_URL=https://your-api.com
+   VITE_WS_URL=wss://your-websocket.com
+   ```
+
+### **Custom Domain Setup**
+
+#### **Vercel Custom Domain**
+1. Go to your project dashboard
+2. Navigate to Settings → Domains
+3. Add your domain
+4. Update DNS records as instructed
+5. Wait for propagation (up to 48 hours)
+
+#### **Netlify Custom Domain**
+1. Go to your site dashboard
+2. Navigate to Domain management
+3. Add custom domain
+4. Update DNS records as instructed
+5. Wait for propagation (up to 48 hours)
+
+### **Performance Optimization**
+
+#### **Vercel Optimizations**
+- Automatic image optimization
+- Edge caching
+- CDN distribution
+- Automatic HTTPS
+- Performance monitoring
+
+#### **Netlify Optimizations**
+- Automatic asset optimization
+- Global CDN
+- Automatic HTTPS
+- Form handling
+- Serverless functions support
+
+### **Deployment Checklist**
+
+Before deploying, ensure:
+
+- [ ] All environment variables are set
+- [ ] Build command works locally (`npm run build`)
+- [ ] No console errors in development
+- [ ] All dependencies are in `package.json`
+- [ ] `.gitignore` excludes `node_modules` and `dist`
+- [ ] Custom domain DNS is configured (if applicable)
+
+### **Post-Deployment**
+
+After successful deployment:
+
+1. **Test your application**
+   - Check all pages load correctly
+   - Verify API connections work
+   - Test responsive design
+   - Validate PDF generation
+
+2. **Set up monitoring**
+   - Enable error tracking
+   - Monitor performance
+   - Set up uptime monitoring
+
+3. **Configure analytics**
+   - Add Google Analytics
+   - Set up conversion tracking
+   - Monitor user behavior
+
+### **Troubleshooting Deployment**
+
+#### **Common Vercel Issues**
+- **Build fails**: Check build logs for missing dependencies
+- **404 errors**: Ensure `vercel.json` has proper redirects
+- **Environment variables**: Verify they're set in Vercel dashboard
+
+#### **Common Netlify Issues**
+- **Build fails**: Check `netlify.toml` configuration
+- **404 errors**: Ensure `netlify.toml` has proper redirects
+- **Environment variables**: Verify they're set in Netlify dashboard
+
+#### **General Issues**
+- **CORS errors**: Configure API CORS settings
+- **WebSocket issues**: Ensure WSS (secure) URLs in production
+- **Performance**: Optimize images and bundle size
+
+---
+
+**🎉 Your AdMyBrand Dashboard is now live!**
