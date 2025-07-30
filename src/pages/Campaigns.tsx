@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { Download, Search, Filter, Plus, Wifi, WifiOff, Calendar, Trash2 } from "lucide-react";
+import { FileText, FileDown, Search, Filter, Plus, Wifi, WifiOff, Calendar, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWebSocket } from "@/services/websocket";
 import { useToast } from "@/hooks/use-toast";
@@ -992,7 +992,7 @@ ROAS: ${campaign.roas}x
                 </>
               ) : (
                 <>
-                  <Download className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <FileText className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                   <span className="hidden sm:inline">CSV</span>
                 </>
               )}
@@ -1012,7 +1012,7 @@ ROAS: ${campaign.roas}x
                 </>
               ) : (
                 <>
-                  <Download className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <FileDown className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                   <span className="hidden sm:inline">PDF</span>
                 </>
               )}
@@ -1268,7 +1268,7 @@ ROAS: ${campaign.roas}x
 
       {/* New Campaign Dialog */}
       <Dialog open={showNewCampaignDialog} onOpenChange={setShowNewCampaignDialog}>
-        <DialogContent className="sm:max-w-[425px] mx-4 max-w-[95vw]">
+        <DialogContent className="sm:max-w-[425px] max-w-[95vw] sm:mx-4">
           <DialogHeader>
             <DialogTitle className="text-lg">Create New Campaign</DialogTitle>
             <DialogDescription className="text-sm">
@@ -1362,7 +1362,7 @@ ROAS: ${campaign.roas}x
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="mx-4 max-w-md">
+        <AlertDialogContent className="max-w-[95vw] sm:mx-4 sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
             <AlertDialogDescription className="text-sm">

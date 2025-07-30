@@ -143,13 +143,13 @@ export function Navbar() {
                     <span>Profile</span>
                   </DropdownMenuItem>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md bg-background/90 border-glass-border shadow-2xl mx-4">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
+                <DialogContent className="sm:max-w-md bg-background/90 border-glass-border shadow-2xl max-w-[95vw] sm:mx-4">
+                  <DialogHeader className="text-center sm:text-left">
+                    <DialogTitle className="flex items-center gap-2 justify-center sm:justify-start">
                       <User className="h-5 w-5 text-primary" />
                       Profile Options
                     </DialogTitle>
-                    <DialogDescription className="text-sm">
+                    <DialogDescription className="text-sm text-center sm:text-left">
                       {user?.name} • <span className="break-all">{user?.email}</span>
                     </DialogDescription>
                   </DialogHeader>
@@ -158,13 +158,13 @@ export function Navbar() {
                     {/* Logout with Confirmation */}
                     <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" className="justify-start">
+                        <Button variant="outline" className="justify-center sm:justify-start">
                           <LogOut className="mr-2 h-4 w-4" />
                           Log out
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-background/90 border-glass-border shadow-2xl mx-4 max-w-md">
-                        <AlertDialogHeader>
+                      <AlertDialogContent className="bg-background/90 border-glass-border shadow-2xl max-w-[95vw] sm:mx-4 sm:max-w-md">
+                        <AlertDialogHeader className="text-center sm:text-left">
                           <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
                           <AlertDialogDescription>
                             Are you sure you want to log out? You will need to sign in again to access your account.
@@ -182,13 +182,13 @@ export function Navbar() {
                     {/* Delete Account with Confirmation */}
                     <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="justify-start">
+                        <Button variant="destructive" className="justify-center sm:justify-start">
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete Account
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-background/90 border-glass-border shadow-2xl mx-4 max-w-md">
-                        <AlertDialogHeader>
+                      <AlertDialogContent className="bg-background/90 border-glass-border shadow-2xl max-w-[95vw] sm:mx-4 sm:max-w-md">
+                        <AlertDialogHeader className="text-center sm:text-left">
                           <AlertDialogTitle className="text-destructive">Delete Account</AlertDialogTitle>
                           <AlertDialogDescription>
                             This action cannot be undone. This will permanently delete your account
