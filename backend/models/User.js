@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  deletedAt: {
+    type: Date,
+    default: null
+  },
   lastLogin: {
     type: Date
   }
@@ -63,9 +67,19 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Static method to find user by email
+// Static method to find user by email (excluding deleted users)
 userSchema.statics.findByEmail = function(email) {
-  return this.findOne({ email: email.toLowerCase() });
+  return this.findOne({ 
+    email: email.toLowerCase(),
+    deletedAt: null 
+  });
+};
+
+// Static method to find user by email (including deleted users)
+userSchema.statics.findByEmailIncludingDeleted = function(email) {
+  return this.findOne({ 
+    email: email.toLowerCase()
+  });
 };
 
 const User = mongoose.model('User', userSchema);

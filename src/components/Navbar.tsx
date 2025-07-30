@@ -40,14 +40,22 @@ export function Navbar() {
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
-      // Simple logout for now since delete endpoint has issues
-      logout();
-      toast({
-        title: "Account Deleted",
-        description: "Your account has been deleted and you have been logged out.",
-      });
-      setDeleteDialogOpen(false);
-      setProfileModalOpen(false);
+      const result = await deleteAccount();
+      
+      if (result.success) {
+        toast({
+          title: "Account Deleted",
+          description: "Your account has been permanently deleted and you have been logged out.",
+        });
+        setDeleteDialogOpen(false);
+        setProfileModalOpen(false);
+      } else {
+        toast({
+          title: "Deletion Failed",
+          description: result.error || "Failed to delete account. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Error deleting account:', error);
       toast({

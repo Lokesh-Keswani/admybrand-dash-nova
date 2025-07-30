@@ -120,11 +120,11 @@ router.post('/login', [
       });
     }
 
-    // Check if user is active
-    if (!user.isActive) {
+    // Check if user is active and not deleted
+    if (!user.isActive || user.deletedAt) {
       return res.status(401).json({
         success: false,
-        message: 'Account is deactivated'
+        message: 'Account is deactivated or deleted'
       });
     }
 
@@ -184,7 +184,7 @@ router.get('/profile', async (req, res) => {
     
     // Find user
     const user = await User.findById(decoded.userId);
-    if (!user || !user.isActive) {
+    if (!user || !user.isActive || user.deletedAt) {
       return res.status(401).json({
         success: false,
         message: 'Invalid token or user not found'
@@ -251,7 +251,7 @@ router.put('/profile', [
     
     // Find user
     const user = await User.findById(decoded.userId);
-    if (!user || !user.isActive) {
+    if (!user || !user.isActive || user.deletedAt) {
       return res.status(401).json({
         success: false,
         message: 'Invalid token or user not found'
@@ -333,7 +333,7 @@ router.put('/change-password', [
     
     // Find user
     const user = await User.findById(decoded.userId);
-    if (!user || !user.isActive) {
+    if (!user || !user.isActive || user.deletedAt) {
       return res.status(401).json({
         success: false,
         message: 'Invalid token or user not found'
@@ -391,16 +391,19 @@ router.delete('/delete-account', async (req, res) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production');
     
-    // Find and delete the user
+    // Find and soft delete the user
     const user = await User.findById(decoded.userId);
-    if (!user || !user.isActive) {
+    if (!user || !user.isActive || user.deletedAt) {
       return res.status(401).json({
         success: false,
         message: 'Invalid token or user not found'
       });
     }
 
-    await User.findByIdAndDelete(decoded.userId);
+    // Soft delete by setting deletedAt timestamp
+    user.deletedAt = new Date();
+    user.isActive = false;
+    await user.save();
 
     res.json({ 
       success: true, 

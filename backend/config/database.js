@@ -26,10 +26,10 @@ const createDemoUser = async () => {
     // Import User model
     const { default: User } = await import('../models/User.js');
     
-    // Check if demo user already exists
-    const existingDemo = await User.findByEmail('demo@admybrand.com');
+    // Check if demo user already exists and is not deleted
+    const existingDemo = await User.findByEmailIncludingDeleted('demo@admybrand.com');
     
-    if (!existingDemo) {
+    if (!existingDemo || existingDemo.deletedAt) {
       const demoUser = new User({
         name: 'Demo User',
         email: 'demo@admybrand.com',
