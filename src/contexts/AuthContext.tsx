@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 interface User {
   id: string;
@@ -71,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      console.log('🔗 Attempting to connect to:', API_BASE_URL);
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -78,6 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         body: JSON.stringify({ email, password })
       });
+      
+      console.log('📡 Response status:', response.status);
       
       let data;
       try {
