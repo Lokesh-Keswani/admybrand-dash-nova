@@ -1341,16 +1341,16 @@ ROAS: ${campaign.roas}x
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleExportCampaignCSV(campaign.id)}>
+                        <DropdownMenuContent align="end" className="bg-background/90 border-glass-border shadow-2xl backdrop-blur-xl">
+                          <DropdownMenuItem onClick={() => handleExportCampaignCSV(campaign.id)} className="hover:bg-sidebar-accent/50">
                             <FileText className="mr-2 h-4 w-4" />
                             Export CSV
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleExportCampaignPDF(campaign.id)}>
+                          <DropdownMenuItem onClick={() => handleExportCampaignPDF(campaign.id)} className="hover:bg-sidebar-accent/50">
                             <FileDown className="mr-2 h-4 w-4" />
                             Export PDF
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openDeleteDialog(campaign.id, campaign.name)}>
+                          <DropdownMenuItem onClick={() => openDeleteDialog(campaign.id, campaign.name)} className="hover:bg-red-500/10 text-red-500 focus:text-red-500">
                             <Trash2 className="mr-2 h-4 w-4 text-red-500" />
                             Delete Campaign
                           </DropdownMenuItem>

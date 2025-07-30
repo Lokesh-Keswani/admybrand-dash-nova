@@ -61,10 +61,10 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-glass-border bg-glass/50 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-glass-border bg-background/95 backdrop-blur-xl shadow-sm">
       <div className="flex h-14 sm:h-16 items-center justify-between px-2 sm:px-4">
         <div className="flex items-center gap-2 sm:gap-4">
-          <SidebarTrigger className="h-8 w-8 md:h-9 md:w-9" />
+          <SidebarTrigger className="h-8 w-8 md:h-9 md:w-9 hover:bg-muted/80 hover:backdrop-blur-xl transition-all duration-200 rounded-lg" />
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-gradient-primary">
               <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
@@ -92,7 +92,7 @@ export function Navbar() {
           {/* User Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-muted/80 hover:backdrop-blur-xl transition-all duration-200">
                 <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                   <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.name}`} alt={user?.name} />
                   <AvatarFallback className="bg-gradient-primary text-primary-foreground text-xs sm:text-sm font-medium">

@@ -143,9 +143,23 @@ export default function Reports() {
         description: "All reports have been generated as PDF successfully.",
       });
     } catch (error) {
+      console.error('PDF generation error:', error);
+      
+      let errorMessage = "Failed to generate reports PDF. Please try again.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('popup may be blocked')) {
+          errorMessage = "Popup blocked by browser. Please allow popups for this site and try again.";
+        } else if (error.message.includes('Failed to open print window')) {
+          errorMessage = "Unable to open print window. Please check your browser settings.";
+        } else if (error.message.includes('Failed to print window')) {
+          errorMessage = "Print dialog failed to open. Please try again.";
+        }
+      }
+      
       toast({
         title: "PDF Generation Failed",
-        description: "Failed to generate reports PDF. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -199,261 +213,352 @@ export default function Reports() {
 
   // Generate actual PDF report for individual report
   const generateReportPDF = async (reportTitle: string): Promise<void> => {
-    return new Promise((resolve) => {
-      // Create a new window for PDF generation
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        throw new Error('Failed to open print window');
-      }
+    return new Promise((resolve, reject) => {
+      try {
+        // Try to open window with specific features to avoid popup blockers
+        const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+        
+        if (!printWindow) {
+          reject(new Error('Popup blocked by browser. Please allow popups for this site and try again.'));
+          return;
+        }
 
-      const reportData = generateMockReportData(reportTitle);
-      const today = new Date().toLocaleDateString();
+        // Check if the window was actually opened
+        if (printWindow.closed || typeof printWindow.closed === 'undefined') {
+          reject(new Error('Popup blocked by browser. Please allow popups for this site and try again.'));
+          return;
+        }
 
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${reportTitle}</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 40px;
-              line-height: 1.6;
-              color: #333;
-            }
-            .header {
-              text-align: center;
-              border-bottom: 2px solid #333;
-              padding-bottom: 20px;
-              margin-bottom: 30px;
-            }
-            .company-name {
-              font-size: 24px;
-              font-weight: bold;
-              color: #2563eb;
-              margin-bottom: 10px;
-            }
-            .report-title {
-              font-size: 18px;
-              font-weight: bold;
-              margin-bottom: 5px;
-            }
-            .report-date {
-              font-size: 14px;
-              color: #666;
-              margin-bottom: 10px;
-            }
-            .content {
-              background: #f8fafc;
-              padding: 20px;
-              border-radius: 8px;
-              border-left: 4px solid #2563eb;
-            }
-            .data-table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-            }
-            .data-table th, .data-table td {
-              border: 1px solid #e5e7eb;
-              padding: 8px 12px;
-              text-align: left;
-            }
-            .data-table th {
-              background: #f3f4f6;
-              font-weight: bold;
-            }
-            .data-table tr:nth-child(even) {
-              background: #f9fafb;
-            }
-            .footer {
-              margin-top: 30px;
-              text-align: center;
-              font-size: 12px;
-              color: #666;
-              border-top: 1px solid #e5e7eb;
-              padding-top: 20px;
-            }
-            @media print {
-              body { margin: 20px; }
-              .header { border-bottom-color: #000; }
-              .company-name { color: #000; }
-              .content { border-left-color: #000; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="company-name">AdMyBrand</div>
-            <div class="report-title">${reportTitle}</div>
-            <div class="report-date">Generated on ${today}</div>
-          </div>
-          
-          <div class="content">
-            <h2>Report Summary</h2>
-            <p>This report contains detailed analytics data for ${reportTitle.toLowerCase()}.</p>
+        const reportData = generateMockReportData(reportTitle);
+        const today = new Date().toLocaleDateString();
+
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${reportTitle}</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                margin: 40px;
+                line-height: 1.6;
+                color: #333;
+              }
+              .header {
+                text-align: center;
+                border-bottom: 2px solid #333;
+                padding-bottom: 20px;
+                margin-bottom: 30px;
+              }
+              .company-name {
+                font-size: 24px;
+                font-weight: bold;
+                color: #2563eb;
+                margin-bottom: 10px;
+              }
+              .report-title {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 5px;
+              }
+              .report-date {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 10px;
+              }
+              .content {
+                background: #f8fafc;
+                padding: 20px;
+                border-radius: 8px;
+                border-left: 4px solid #2563eb;
+              }
+              .data-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+              }
+              .data-table th, .data-table td {
+                border: 1px solid #e5e7eb;
+                padding: 8px 12px;
+                text-align: left;
+              }
+              .data-table th {
+                background: #f3f4f6;
+                font-weight: bold;
+              }
+              .data-table tr:nth-child(even) {
+                background: #f9fafb;
+              }
+              .footer {
+                margin-top: 30px;
+                text-align: center;
+                font-size: 12px;
+                color: #666;
+                border-top: 1px solid #e5e7eb;
+                padding-top: 20px;
+              }
+              @media print {
+                body { margin: 20px; }
+                .header { border-bottom-color: #000; }
+                .company-name { color: #000; }
+                .content { border-left-color: #000; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="company-name">AdMyBrand</div>
+              <div class="report-title">${reportTitle}</div>
+              <div class="report-date">Generated on ${today}</div>
+            </div>
             
-            <h3>Data Overview</h3>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  ${reportData.split('\n')[0].split(',').map(header => `<th>${header}</th>`).join('')}
-                </tr>
-              </thead>
-              <tbody>
-                ${reportData.split('\n').slice(1).map(row => 
-                  `<tr>${row.split(',').map(cell => `<td>${cell}</td>`).join('')}</tr>`
-                ).join('')}
-              </tbody>
-            </table>
-          </div>
-          
-          <div class="footer">
-            <p>Generated by AdMyBrand Dashboard | ${today}</p>
-          </div>
-        </body>
-        </html>
-      `;
+            <div class="content">
+              <h2>Report Summary</h2>
+              <p>This report contains detailed analytics data for ${reportTitle.toLowerCase()}.</p>
+              
+              <h3>Data Overview</h3>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    ${reportData.split('\n')[0].split(',').map(header => `<th>${header}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${reportData.split('\n').slice(1).map(row => 
+                    `<tr>${row.split(',').map(cell => `<td>${cell}</td>`).join('')}</tr>`
+                  ).join('')}
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="footer">
+              <p>Generated by AdMyBrand Dashboard | ${today}</p>
+            </div>
+          </body>
+          </html>
+        `;
 
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
+        // Set a timeout to handle cases where onload doesn't fire
+        const timeout = setTimeout(() => {
+          try {
+            if (!printWindow.closed) {
+              printWindow.print();
+              printWindow.close();
+            }
+            resolve();
+          } catch (error) {
+            reject(new Error('Failed to print window'));
+          }
+        }, 3000);
 
-      // Wait for content to load, then print
-      printWindow.onload = () => {
-        printWindow.print();
-        printWindow.close();
-        resolve();
-      };
+        // Handle window load event
+        printWindow.onload = () => {
+          clearTimeout(timeout);
+          try {
+            if (!printWindow.closed) {
+              printWindow.print();
+              printWindow.close();
+            }
+            resolve();
+          } catch (error) {
+            reject(new Error('Failed to print window'));
+          }
+        };
+
+        // Handle window error
+        printWindow.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error('Failed to load print window'));
+        };
+
+        // Write content to window
+        try {
+          printWindow.document.write(htmlContent);
+          printWindow.document.close();
+        } catch (error) {
+          clearTimeout(timeout);
+          reject(new Error('Failed to write content to print window'));
+        }
+
+      } catch (error) {
+        reject(error);
+      }
     });
   };
 
   // Generate actual PDF report for all reports
   const generateAllReportsPDF = async (): Promise<void> => {
-    return new Promise((resolve) => {
-      // Create a new window for PDF generation
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        throw new Error('Failed to open print window');
-      }
+    return new Promise((resolve, reject) => {
+      try {
+        // Try to open window with specific features to avoid popup blockers
+        const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+        
+        if (!printWindow) {
+          // If popup is blocked, try alternative approach
+          reject(new Error('Popup blocked by browser. Please allow popups for this site and try again.'));
+          return;
+        }
 
-      const today = new Date().toLocaleDateString();
-      const reportsContent = reports.map(report => {
-        const reportData = generateMockReportData(report.title);
-        return `
-          <div style="page-break-before: always; margin-top: 40px;">
-            <h2 style="color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
-              ${report.title}
-            </h2>
-            <p style="color: #666; margin-bottom: 20px;">${report.description}</p>
+        // Check if the window was actually opened (some browsers return null even with features)
+        if (printWindow.closed || typeof printWindow.closed === 'undefined') {
+          reject(new Error('Popup blocked by browser. Please allow popups for this site and try again.'));
+          return;
+        }
+
+        const today = new Date().toLocaleDateString();
+        const reportsContent = reports.map(report => {
+          const reportData = generateMockReportData(report.title);
+          return `
+            <div style="page-break-before: always; margin-top: 40px;">
+              <h2 style="color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
+                ${report.title}
+              </h2>
+              <p style="color: #666; margin-bottom: 20px;">${report.description}</p>
+              
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    ${reportData.split('\n')[0].split(',').map(header => `<th>${header}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${reportData.split('\n').slice(1).map(row => 
+                    `<tr>${row.split(',').map(cell => `<td>${cell}</td>`).join('')}</tr>`
+                  ).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }).join('');
+
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>All Reports - AdMyBrand</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                margin: 40px;
+                line-height: 1.6;
+                color: #333;
+              }
+              .header {
+                text-align: center;
+                border-bottom: 2px solid #333;
+                padding-bottom: 20px;
+                margin-bottom: 30px;
+              }
+              .company-name {
+                font-size: 24px;
+                font-weight: bold;
+                color: #2563eb;
+                margin-bottom: 10px;
+              }
+              .report-title {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 5px;
+              }
+              .report-date {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 10px;
+              }
+              .data-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                font-size: 12px;
+              }
+              .data-table th, .data-table td {
+                border: 1px solid #e5e7eb;
+                padding: 6px 8px;
+                text-align: left;
+              }
+              .data-table th {
+                background: #f3f4f6;
+                font-weight: bold;
+              }
+              .data-table tr:nth-child(even) {
+                background: #f9fafb;
+              }
+              .footer {
+                margin-top: 30px;
+                text-align: center;
+                font-size: 12px;
+                color: #666;
+                border-top: 1px solid #e5e7eb;
+                padding-top: 20px;
+              }
+              @media print {
+                body { margin: 20px; }
+                .header { border-bottom-color: #000; }
+                .company-name { color: #000; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="company-name">AdMyBrand</div>
+              <div class="report-title">All Reports</div>
+              <div class="report-date">Generated on ${today}</div>
+            </div>
             
-            <table class="data-table">
-              <thead>
-                <tr>
-                  ${reportData.split('\n')[0].split(',').map(header => `<th>${header}</th>`).join('')}
-                </tr>
-              </thead>
-              <tbody>
-                ${reportData.split('\n').slice(1).map(row => 
-                  `<tr>${row.split(',').map(cell => `<td>${cell}</td>`).join('')}</tr>`
-                ).join('')}
-              </tbody>
-            </table>
-          </div>
+            ${reportsContent}
+            
+            <div class="footer">
+              <p>Generated by AdMyBrand Dashboard | ${today}</p>
+            </div>
+          </body>
+          </html>
         `;
-      }).join('');
 
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>All Reports - AdMyBrand</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 40px;
-              line-height: 1.6;
-              color: #333;
+        // Set a timeout to handle cases where onload doesn't fire
+        const timeout = setTimeout(() => {
+          try {
+            if (!printWindow.closed) {
+              printWindow.print();
+              printWindow.close();
             }
-            .header {
-              text-align: center;
-              border-bottom: 2px solid #333;
-              padding-bottom: 20px;
-              margin-bottom: 30px;
-            }
-            .company-name {
-              font-size: 24px;
-              font-weight: bold;
-              color: #2563eb;
-              margin-bottom: 10px;
-            }
-            .report-title {
-              font-size: 18px;
-              font-weight: bold;
-              margin-bottom: 5px;
-            }
-            .report-date {
-              font-size: 14px;
-              color: #666;
-              margin-bottom: 10px;
-            }
-            .data-table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-              font-size: 12px;
-            }
-            .data-table th, .data-table td {
-              border: 1px solid #e5e7eb;
-              padding: 6px 8px;
-              text-align: left;
-            }
-            .data-table th {
-              background: #f3f4f6;
-              font-weight: bold;
-            }
-            .data-table tr:nth-child(even) {
-              background: #f9fafb;
-            }
-            .footer {
-              margin-top: 30px;
-              text-align: center;
-              font-size: 12px;
-              color: #666;
-              border-top: 1px solid #e5e7eb;
-              padding-top: 20px;
-            }
-            @media print {
-              body { margin: 20px; }
-              .header { border-bottom-color: #000; }
-              .company-name { color: #000; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="company-name">AdMyBrand</div>
-            <div class="report-title">All Reports</div>
-            <div class="report-date">Generated on ${today}</div>
-          </div>
-          
-          ${reportsContent}
-          
-          <div class="footer">
-            <p>Generated by AdMyBrand Dashboard | ${today}</p>
-          </div>
-        </body>
-        </html>
-      `;
+            resolve();
+          } catch (error) {
+            reject(new Error('Failed to print window'));
+          }
+        }, 3000);
 
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
+        // Handle window load event
+        printWindow.onload = () => {
+          clearTimeout(timeout);
+          try {
+            if (!printWindow.closed) {
+              printWindow.print();
+              printWindow.close();
+            }
+            resolve();
+          } catch (error) {
+            reject(new Error('Failed to print window'));
+          }
+        };
 
-      // Wait for content to load, then print
-      printWindow.onload = () => {
-        printWindow.print();
-        printWindow.close();
-        resolve();
-      };
+        // Handle window error
+        printWindow.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error('Failed to load print window'));
+        };
+
+        // Write content to window
+        try {
+          printWindow.document.write(htmlContent);
+          printWindow.document.close();
+        } catch (error) {
+          clearTimeout(timeout);
+          reject(new Error('Failed to write content to print window'));
+        }
+
+      } catch (error) {
+        reject(error);
+      }
     });
   };
 
