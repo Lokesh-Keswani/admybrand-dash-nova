@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { FileText, FileDown, Search, Filter, Plus, Wifi, WifiOff, Calendar, Trash2 } from "lucide-react";
+import { FileText, FileDown, Search, Filter, Plus, Wifi, WifiOff, Calendar, Trash2, MoreHorizontal } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWebSocket } from "@/services/websocket";
 import { useToast } from "@/hooks/use-toast";
@@ -941,6 +942,57 @@ ROAS: ${campaign.roas}x
   const formatCurrency = (amount: number) => `$${amount.toLocaleString()}`;
   const formatNumber = (num: number) => num.toLocaleString();
 
+  // Handle individual campaign CSV export
+  const handleExportCampaignCSV = async (campaignId: string) => {
+    const campaign = campaigns.find(c => c.id === campaignId);
+    if (!campaign) return;
+
+    try {
+      const csvData = generateCampaignCSV([campaign]);
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${campaign.name.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "CSV Export Complete",
+        description: `${campaign.name} has been exported successfully.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export campaign CSV. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle individual campaign PDF export
+  const handleExportCampaignPDF = async (campaignId: string) => {
+    const campaign = campaigns.find(c => c.id === campaignId);
+    if (!campaign) return;
+
+    try {
+      await generatePDFReport([campaign], 'individual');
+      toast({
+        title: "PDF Export Complete",
+        description: `${campaign.name} report has been generated successfully.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate campaign PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 space-y-6 p-6">
@@ -1180,6 +1232,48 @@ ROAS: ${campaign.roas}x
                       </div>
                     </div>
                   </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button 
+                      onClick={() => handleExportCampaignCSV(campaign.id)} 
+                      variant="outline" 
+                      size="sm"
+                      disabled={downloadingCSV}
+                      className="h-8 text-xs sm:h-9 sm:text-sm"
+                    >
+                      {downloadingCSV ? (
+                        <>
+                          <div className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          <span className="hidden sm:inline">Exporting...</span>
+                          <span className="sm:hidden">...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">CSV</span>
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      onClick={() => handleExportCampaignPDF(campaign.id)} 
+                      variant="outline" 
+                      size="sm"
+                      disabled={downloadingPDF}
+                      className="h-8 text-xs sm:h-9 sm:text-sm"
+                    >
+                      {downloadingPDF ? (
+                        <>
+                          <div className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          <span className="hidden sm:inline">Generating...</span>
+                          <span className="sm:hidden">...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileDown className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">PDF</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </Card>
             )) : (
@@ -1240,14 +1334,28 @@ ROAS: ${campaign.roas}x
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openDeleteDialog(campaign.id, campaign.name)}
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleExportCampaignCSV(campaign.id)}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Export CSV
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleExportCampaignPDF(campaign.id)}>
+                            <FileDown className="mr-2 h-4 w-4" />
+                            Export PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openDeleteDialog(campaign.id, campaign.name)}>
+                            <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+                            Delete Campaign
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 )) : (
