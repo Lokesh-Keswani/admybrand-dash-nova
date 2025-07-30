@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { RevenueChart } from "@/components/charts/RevenueChart"
 import { ConversionsChart } from "@/components/charts/ConversionsChart"
 import { TrafficSourcesChart } from "@/components/charts/TrafficSourcesChart"
+import { Badge } from "@/components/ui/badge"
 
 // LocalStorage key for campaigns (same as Campaigns page)
 const CAMPAIGNS_STORAGE_KEY = 'admybrand_campaigns';
@@ -334,15 +335,15 @@ export function Dashboard() {
   const formatNumber = (num: number) => num.toLocaleString();
 
   return (
-    <div className="flex-1 space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-4 sm:space-y-6 py-2 sm:py-4 lg:py-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Dashboard</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Welcome back! Here's an overview of your campaign performance.
           </p>
         </div>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
           {connectionStatus === 'connected' ? (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -362,7 +363,7 @@ export function Dashboard() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <div className="flex items-center gap-1">
                 <WifiOff className="h-4 w-4 text-red-500" />
                 <span className="text-red-600">Offline</span>
@@ -388,7 +389,7 @@ export function Dashboard() {
 
       {/* Metrics Grid */}
       {metrics && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             title="Total Revenue"
             value={metrics.totalRevenue.value}
@@ -421,40 +422,40 @@ export function Dashboard() {
       )}
 
       {/* Charts Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+        <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md lg:col-span-1 xl:col-span-1">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               Revenue Trend
             </CardTitle>
-            <CardDescription>Monthly revenue over the last 6 months</CardDescription>
+            <CardDescription className="text-sm">Monthly revenue over the last 6 months</CardDescription>
           </CardHeader>
           <CardContent>
             <RevenueChart height={200} />
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-secondary" />
+        <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md lg:col-span-1 xl:col-span-1">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-secondary" />
               Campaign Conversions
             </CardTitle>
-            <CardDescription>Conversions by campaign type</CardDescription>
+            <CardDescription className="text-sm">Conversions by campaign type</CardDescription>
           </CardHeader>
           <CardContent>
             <ConversionsChart height={200} />
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChart className="h-5 w-5 text-accent" />
+        <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md lg:col-span-2 xl:col-span-1">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <PieChart className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
               Traffic Sources
             </CardTitle>
-            <CardDescription>Traffic distribution by source</CardDescription>
+            <CardDescription className="text-sm">Traffic distribution by source</CardDescription>
           </CardHeader>
           <CardContent>
             <TrafficSourcesChart height={200} />
@@ -464,45 +465,84 @@ export function Dashboard() {
 
       {/* Campaigns Table */}
       <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md">
-        <CardHeader>
-          <CardTitle>Top Campaigns</CardTitle>
-          <CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base sm:text-lg">Top Campaigns</CardTitle>
+          <CardDescription className="text-sm">
             Your best performing campaigns this month
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-glass-border">
-                <TableHead className="text-muted-foreground">Campaign</TableHead>
-                <TableHead className="text-muted-foreground">Impressions</TableHead>
-                <TableHead className="text-muted-foreground">Clicks</TableHead>
-                <TableHead className="text-muted-foreground">CTR</TableHead>
-                <TableHead className="text-muted-foreground">Conversions</TableHead>
-                <TableHead className="text-muted-foreground">ROAS</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {campaigns && campaigns.length > 0 ? campaigns.map((campaign) => (
-                <TableRow key={campaign.id} className="border-glass-border">
-                  <TableCell className="font-medium text-foreground">
-                    {campaign.name}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{formatNumber(campaign.impressions)}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatNumber(campaign.clicks)}</TableCell>
-                  <TableCell className="text-muted-foreground">{campaign.ctr}%</TableCell>
-                  <TableCell className="font-medium text-foreground">{campaign.conversions}</TableCell>
-                  <TableCell className="font-medium text-foreground">{campaign.roas}x</TableCell>
+        <CardContent className="p-0 sm:p-6">
+          {/* Mobile Card View */}
+          <div className="block sm:hidden space-y-3 p-4">
+            {campaigns && campaigns.length > 0 ? campaigns.map((campaign) => (
+              <Card key={campaign.id} className="p-4 bg-muted/50">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm">{campaign.name}</h4>
+                    <Badge variant="outline" className="text-xs">{campaign.roas}x ROAS</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Impressions:</span>
+                      <p className="font-medium">{formatNumber(campaign.impressions)}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Clicks:</span>
+                      <p className="font-medium">{formatNumber(campaign.clicks)}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">CTR:</span>
+                      <p className="font-medium">{campaign.ctr}%</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Conversions:</span>
+                      <p className="font-medium">{campaign.conversions}</p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )) : (
+              <div className="text-center text-muted-foreground py-8 text-sm">
+                {loading ? "Loading campaigns..." : "No campaigns found"}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden sm:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-glass-border">
+                  <TableHead className="text-muted-foreground text-sm">Campaign</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">Impressions</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">Clicks</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">CTR</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">Conversions</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">ROAS</TableHead>
                 </TableRow>
-              )) : (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                    {loading ? "Loading campaigns..." : "No campaigns found"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {campaigns && campaigns.length > 0 ? campaigns.map((campaign) => (
+                  <TableRow key={campaign.id} className="border-glass-border">
+                    <TableCell className="font-medium text-foreground text-sm">
+                      {campaign.name}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{formatNumber(campaign.impressions)}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{formatNumber(campaign.clicks)}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{campaign.ctr}%</TableCell>
+                    <TableCell className="font-medium text-foreground text-sm">{campaign.conversions}</TableCell>
+                    <TableCell className="font-medium text-foreground text-sm">{campaign.roas}x</TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8 text-sm">
+                      {loading ? "Loading campaigns..." : "No campaigns found"}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

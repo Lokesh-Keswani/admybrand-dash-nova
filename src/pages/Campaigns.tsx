@@ -955,76 +955,83 @@ ROAS: ${campaign.roas}x
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-4 sm:space-y-6 py-2 sm:py-4 lg:py-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">Campaigns</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Campaigns</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Manage and track your marketing campaigns
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mr-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-2">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
             {isConnected ? (
-              <><Wifi className="h-4 w-4 text-green-500" /> Live Updates</>
+              <><Wifi className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" /> Live Updates</>
             ) : (
-              <><WifiOff className="h-4 w-4 text-red-500" /> Offline</>
+              <><WifiOff className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" /> Offline</>
             )}
             {lastUpdated && (
-              <span className="ml-2">
+              <span className="hidden sm:inline-block ml-2">
                 Last updated: {new Date(lastUpdated).toLocaleTimeString()}
               </span>
             )}
           </div>
-          <Button 
-            onClick={handleExportCSV} 
-            variant="outline" 
-            size="sm"
-            disabled={downloadingCSV}
-          >
-            {downloadingCSV ? (
-              <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Exporting...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4 mr-2" />
-                CSV
-              </>
-            )}
-          </Button>
-          <Button 
-            onClick={handleExportPDF} 
-            variant="outline" 
-            size="sm"
-            disabled={downloadingPDF}
-          >
-            {downloadingPDF ? (
-              <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4 mr-2" />
-                PDF
-              </>
-            )}
-          </Button>
-          <Button 
-            className="bg-gradient-primary"
-            onClick={() => setShowNewCampaignDialog(true)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Campaign
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button 
+              onClick={handleExportCSV} 
+              variant="outline" 
+              size="sm"
+              disabled={downloadingCSV}
+              className="h-8 text-xs sm:h-9 sm:text-sm"
+            >
+              {downloadingCSV ? (
+                <>
+                  <div className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  <span className="hidden sm:inline">Exporting...</span>
+                  <span className="sm:hidden">...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">CSV</span>
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={handleExportPDF} 
+              variant="outline" 
+              size="sm"
+              disabled={downloadingPDF}
+              className="h-8 text-xs sm:h-9 sm:text-sm"
+            >
+              {downloadingPDF ? (
+                <>
+                  <div className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  <span className="hidden sm:inline">Generating...</span>
+                  <span className="sm:hidden">...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">PDF</span>
+                </>
+              )}
+            </Button>
+            <Button 
+              className="bg-gradient-primary h-8 text-xs sm:h-9 sm:text-sm"
+              onClick={() => setShowNewCampaignDialog(true)}
+            >
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Campaign</span>
+              <span className="sm:hidden">New</span>
+            </Button>
+          </div>
         </div>
       </div>
 
       {error && (
         <Alert className="border-red-500">
-          <AlertDescription>
+          <AlertDescription className="text-sm">
             Error loading campaigns: {error}
             <button 
               onClick={loadCampaigns}
@@ -1038,210 +1045,295 @@ ROAS: ${campaign.roas}x
 
       {/* Filters */}
       <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
             Filters
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 items-center">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
+            <div className="flex-1 min-w-0">
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search campaigns..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-8"
+                  className="pl-8 text-sm"
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="paused">Paused</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="budget">Budget</SelectItem>
-                <SelectItem value="spent">Spent</SelectItem>
-                <SelectItem value="roas">ROAS</SelectItem>
-                <SelectItem value="updatedAt">Updated</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="desc">Desc</SelectItem>
-                <SelectItem value="asc">Asc</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-32 sm:w-[140px] text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-32 sm:w-[140px] text-sm">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="budget">Budget</SelectItem>
+                  <SelectItem value="spent">Spent</SelectItem>
+                  <SelectItem value="roas">ROAS</SelectItem>
+                  <SelectItem value="updatedAt">Updated</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
+                <SelectTrigger className="w-20 sm:w-[100px] text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Desc</SelectItem>
+                  <SelectItem value="asc">Asc</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Campaigns Table */}
       <Card className="bg-gradient-surface border-glass-border shadow-glass backdrop-blur-md">
-        <CardHeader>
-          <CardTitle>All Campaigns</CardTitle>
-          <CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base sm:text-lg">All Campaigns</CardTitle>
+          <CardDescription className="text-sm">
             {filteredCampaigns?.length || 0} campaigns found
             {search || statusFilter !== "all" ? ` (filtered from ${campaigns?.length || 0} total)` : ""}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-glass-border">
-                <TableHead className="text-muted-foreground">Campaign</TableHead>
-                <TableHead className="text-muted-foreground">Status</TableHead>
-                <TableHead className="text-muted-foreground">Budget</TableHead>
-                <TableHead className="text-muted-foreground">Spent</TableHead>
-                <TableHead className="text-muted-foreground">Impressions</TableHead>
-                <TableHead className="text-muted-foreground">Clicks</TableHead>
-                <TableHead className="text-muted-foreground">CTR</TableHead>
-                <TableHead className="text-muted-foreground">Conversions</TableHead>
-                <TableHead className="text-muted-foreground">ROAS</TableHead>
-                <TableHead className="text-muted-foreground">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCampaigns && filteredCampaigns.length > 0 ? filteredCampaigns.map((campaign) => (
-                <TableRow key={campaign.id} className="border-glass-border hover:bg-muted/50">
-                  <TableCell className="font-medium text-foreground">
-                    <div>
-                      <div className="font-medium">{campaign.name}</div>
-                      <div className="text-xs text-muted-foreground">
+        <CardContent className="p-0 sm:p-6">
+          {/* Mobile Card View */}
+          <div className="block lg:hidden space-y-3 p-4">
+            {filteredCampaigns && filteredCampaigns.length > 0 ? filteredCampaigns.map((campaign) => (
+              <Card key={campaign.id} className="p-4 bg-muted/50 hover:bg-muted/70 transition-colors">
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-medium text-sm truncate">{campaign.name}</h4>
+                      <p className="text-xs text-muted-foreground">
                         {campaign.startDate} - {campaign.endDate}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {getStatusBadge(campaign.status)}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openDeleteDialog(campaign.id, campaign.name)}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-red-500"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-xs text-muted-foreground">Budget:</span>
+                        <p className="text-sm font-medium">{formatCurrency(campaign.budget)}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">Spent:</span>
+                        <p className="text-sm font-medium">{formatCurrency(campaign.spent)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {((campaign.spent / campaign.budget) * 100).toFixed(1)}% used
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">Impressions:</span>
+                        <p className="text-sm font-medium">{formatNumber(campaign.impressions)}</p>
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(campaign.status)}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatCurrency(campaign.budget)}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    <div>
-                      <div>{formatCurrency(campaign.spent)}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {((campaign.spent / campaign.budget) * 100).toFixed(1)}% used
+                    
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-xs text-muted-foreground">Clicks:</span>
+                        <p className="text-sm font-medium">{formatNumber(campaign.clicks)}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">CTR:</span>
+                        <p className="text-sm font-medium">{campaign.ctr}%</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">Conversions:</span>
+                        <p className="text-sm font-medium">{campaign.conversions}</p>
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{formatNumber(campaign.impressions)}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatNumber(campaign.clicks)}</TableCell>
-                  <TableCell className="text-muted-foreground">{campaign.ctr}%</TableCell>
-                  <TableCell className="font-medium text-foreground">{campaign.conversions}</TableCell>
-                  <TableCell className="font-medium text-foreground">
-                    <div className={`font-medium ${campaign.roas >= 3 ? 'text-green-500' : campaign.roas >= 2 ? 'text-yellow-500' : 'text-red-500'}`}>
-                      {campaign.roas}x
+                  </div>
+                  
+                  <div className="pt-2 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">ROAS:</span>
+                      <div className={`text-sm font-bold ${campaign.roas >= 3 ? 'text-green-500' : campaign.roas >= 2 ? 'text-yellow-500' : 'text-red-500'}`}>
+                        {campaign.roas}x
+                      </div>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDeleteDialog(campaign.id, campaign.name)}
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                  </div>
+                </div>
+              </Card>
+            )) : (
+              <div className="text-center text-muted-foreground py-8 text-sm">
+                {loading ? "Loading campaigns..." : 
+                 search || statusFilter !== "all" ? 
+                 "No campaigns match your filters" : 
+                 "No campaigns found"}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-glass-border">
+                  <TableHead className="text-muted-foreground text-sm">Campaign</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">Status</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">Budget</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">Spent</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">Impressions</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">Clicks</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">CTR</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">Conversions</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">ROAS</TableHead>
+                  <TableHead className="text-muted-foreground text-sm">Actions</TableHead>
                 </TableRow>
-              )) : (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
-                    {loading ? "Loading campaigns..." : 
-                     search || statusFilter !== "all" ? 
-                     "No campaigns match your filters" : 
-                     "No campaigns found"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredCampaigns && filteredCampaigns.length > 0 ? filteredCampaigns.map((campaign) => (
+                  <TableRow key={campaign.id} className="border-glass-border hover:bg-muted/50">
+                    <TableCell className="font-medium text-foreground">
+                      <div>
+                        <div className="font-medium text-sm">{campaign.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {campaign.startDate} - {campaign.endDate}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(campaign.status)}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{formatCurrency(campaign.budget)}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      <div>
+                        <div className="text-sm">{formatCurrency(campaign.spent)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {((campaign.spent / campaign.budget) * 100).toFixed(1)}% used
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{formatNumber(campaign.impressions)}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{formatNumber(campaign.clicks)}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{campaign.ctr}%</TableCell>
+                    <TableCell className="font-medium text-foreground text-sm">{campaign.conversions}</TableCell>
+                    <TableCell className="font-medium text-foreground">
+                      <div className={`font-medium text-sm ${campaign.roas >= 3 ? 'text-green-500' : campaign.roas >= 2 ? 'text-yellow-500' : 'text-red-500'}`}>
+                        {campaign.roas}x
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openDeleteDialog(campaign.id, campaign.name)}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8 text-sm">
+                      {loading ? "Loading campaigns..." : 
+                       search || statusFilter !== "all" ? 
+                       "No campaigns match your filters" : 
+                       "No campaigns found"}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
       {/* New Campaign Dialog */}
       <Dialog open={showNewCampaignDialog} onOpenChange={setShowNewCampaignDialog}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] mx-4 max-w-[95vw]">
           <DialogHeader>
-            <DialogTitle>Create New Campaign</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg">Create New Campaign</DialogTitle>
+            <DialogDescription className="text-sm">
               Add a new marketing campaign to track performance and ROI.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+              <Label htmlFor="name" className="text-sm sm:text-right">
                 Name *
               </Label>
               <Input
                 id="name"
                 placeholder="Summer Sale 2024"
-                className="col-span-3"
+                className="sm:col-span-3"
                 value={newCampaign.name}
                 onChange={(e) => setNewCampaign(prev => ({ ...prev, name: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="budget" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+              <Label htmlFor="budget" className="text-sm sm:text-right">
                 Budget *
               </Label>
               <Input
                 id="budget"
                 type="number"
                 placeholder="50000"
-                className="col-span-3"
+                className="sm:col-span-3"
                 value={newCampaign.budget}
                 onChange={(e) => setNewCampaign(prev => ({ ...prev, budget: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="startDate" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+              <Label htmlFor="startDate" className="text-sm sm:text-right">
                 Start Date *
               </Label>
               <Input
                 id="startDate"
                 type="date"
-                className="col-span-3"
+                className="sm:col-span-3"
                 value={newCampaign.startDate}
                 onChange={(e) => setNewCampaign(prev => ({ ...prev, startDate: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="endDate" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+              <Label htmlFor="endDate" className="text-sm sm:text-right">
                 End Date *
               </Label>
               <Input
                 id="endDate"
                 type="date"
-                className="col-span-3"
+                className="sm:col-span-3"
                 value={newCampaign.endDate}
                 onChange={(e) => setNewCampaign(prev => ({ ...prev, endDate: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+              <Label htmlFor="status" className="text-sm sm:text-right">
                 Status
               </Label>
               <Select 
                 value={newCampaign.status} 
                 onValueChange={(value) => setNewCampaign(prev => ({ ...prev, status: value }))}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="sm:col-span-3">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1252,10 +1344,11 @@ ROAS: ${campaign.roas}x
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
             <Button 
               variant="outline" 
               onClick={() => setShowNewCampaignDialog(false)}
+              className="mt-0"
             >
               Cancel
             </Button>
@@ -1269,18 +1362,21 @@ ROAS: ${campaign.roas}x
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="mx-4 max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-sm">
               Are you sure you want to delete "{campaignToDelete?.name}"? This action cannot be undone and will remove the campaign from all charts and reports.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setDeleteDialogOpen(false);
-              setCampaignToDelete(null);
-            }}>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <AlertDialogCancel 
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setCampaignToDelete(null);
+              }}
+              className="mt-0"
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction 

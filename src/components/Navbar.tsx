@@ -62,32 +62,40 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-glass-border bg-glass/50 backdrop-blur-md">
-      <div className="flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-4">
-          <SidebarTrigger className="lg:hidden" />
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
-              <BarChart3 className="h-5 w-5 text-primary-foreground" />
+      <div className="flex h-14 sm:h-16 items-center justify-between px-2 sm:px-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <SidebarTrigger className="h-8 w-8 md:h-9 md:w-9" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-gradient-primary">
+              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </div>
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            <div className="hidden sm:block">
+              <h1 className="text-lg sm:text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 ADmyBRAND
               </h1>
-              <p className="text-xs text-muted-foreground">Insights</p>
+              <p className="text-xs text-muted-foreground hidden md:block">Insights</p>
+            </div>
+            {/* Mobile brand text */}
+            <div className="block sm:hidden">
+              <h1 className="text-base font-bold bg-gradient-primary bg-clip-text text-transparent">
+                ADmyBRAND
+              </h1>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="hidden sm:block">
+            <ThemeToggle />
+          </div>
           
           {/* User Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                   <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.name}`} alt={user?.name} />
-                  <AvatarFallback className="bg-gradient-primary text-primary-foreground text-sm font-medium">
+                  <AvatarFallback className="bg-gradient-primary text-primary-foreground text-xs sm:text-sm font-medium">
                     {user ? getUserInitials(user.name) : 'U'}
                   </AvatarFallback>
                 </Avatar>
@@ -109,12 +117,23 @@ export function Navbar() {
                   <p className="text-sm font-medium leading-none">
                     {user?.name || 'User'}
                   </p>
-                  <p className="text-xs leading-none text-muted-foreground">
+                  <p className="text-xs leading-none text-muted-foreground truncate">
                     {user?.email}
                   </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-foreground/20 dark:bg-foreground/30" />
+              
+              {/* Theme toggle for mobile */}
+              <div className="block sm:hidden px-2 py-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Theme</span>
+                  <ThemeToggle />
+                </div>
+              </div>
+              <div className="block sm:hidden">
+                <DropdownMenuSeparator className="bg-foreground/20 dark:bg-foreground/30" />
+              </div>
               
               {/* Profile Modal Trigger */}
               <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
@@ -124,14 +143,14 @@ export function Navbar() {
                     <span>Profile</span>
                   </DropdownMenuItem>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md bg-background/90 border-glass-border shadow-2xl">
+                <DialogContent className="sm:max-w-md bg-background/90 border-glass-border shadow-2xl mx-4">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <User className="h-5 w-5 text-primary" />
                       Profile Options
                     </DialogTitle>
-                    <DialogDescription>
-                      {user?.name} • {user?.email}
+                    <DialogDescription className="text-sm">
+                      {user?.name} • <span className="break-all">{user?.email}</span>
                     </DialogDescription>
                   </DialogHeader>
                   
@@ -144,15 +163,15 @@ export function Navbar() {
                           Log out
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-background/90 border-glass-border shadow-2xl">
+                      <AlertDialogContent className="bg-background/90 border-glass-border shadow-2xl mx-4 max-w-md">
                         <AlertDialogHeader>
                           <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
                           <AlertDialogDescription>
                             Are you sure you want to log out? You will need to sign in again to access your account.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                          <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
                           <AlertDialogAction onClick={handleLogout}>
                             Log out
                           </AlertDialogAction>
@@ -168,7 +187,7 @@ export function Navbar() {
                           Delete Account
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-background/90 border-glass-border shadow-2xl">
+                      <AlertDialogContent className="bg-background/90 border-glass-border shadow-2xl mx-4 max-w-md">
                         <AlertDialogHeader>
                           <AlertDialogTitle className="text-destructive">Delete Account</AlertDialogTitle>
                           <AlertDialogDescription>
@@ -176,8 +195,8 @@ export function Navbar() {
                             and remove all your data from our servers.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                          <AlertDialogCancel disabled={isDeleting} className="mt-0">Cancel</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={handleDeleteAccount}
                             disabled={isDeleting}

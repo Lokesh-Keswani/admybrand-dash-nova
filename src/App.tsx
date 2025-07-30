@@ -37,20 +37,22 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <SidebarProvider>
-                      <div className="min-h-screen w-full bg-background">
+                      <div className="min-h-screen w-full bg-background flex flex-col">
                         <Navbar />
-                        <div className="flex w-full">
+                        <div className="flex flex-1 w-full">
                           <AppSidebar />
-                          <main className="flex-1 pt-4">
-                            <Routes>
-                              <Route path="/" element={<Index />} />
-                              <Route path="/reports" element={<Reports />} />
-                              <Route path="/campaigns" element={<Campaigns />} />
-                              <Route path="/analytics" element={<Analytics />} />
-                              <Route path="/settings" element={<Settings />} />
-                              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                              <Route path="*" element={<NotFound />} />
-                            </Routes>
+                          <main className="flex-1 min-w-0 pt-2 sm:pt-4">
+                            <div className="h-full w-full px-2 sm:px-4 lg:px-6">
+                              <Routes>
+                                <Route path="/" element={<Index />} />
+                                <Route path="/reports" element={<Reports />} />
+                                <Route path="/campaigns" element={<Campaigns />} />
+                                <Route path="/analytics" element={<Analytics />} />
+                                <Route path="/settings" element={<Settings />} />
+                                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                                <Route path="*" element={<NotFound />} />
+                              </Routes>
+                            </div>
                           </main>
                         </div>
                       </div>
