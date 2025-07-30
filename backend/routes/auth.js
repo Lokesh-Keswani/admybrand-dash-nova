@@ -1,7 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
-import User from '../models/User.js';
+import User, { getUserModel } from '../models/User.js';
 
 const router = express.Router();
 
@@ -12,6 +12,11 @@ const generateToken = (userId) => {
     process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production',
     { expiresIn: '7d' }
   );
+};
+
+// Get the appropriate User model (real or mock)
+const getCurrentUserModel = () => {
+  return getUserModel();
 };
 
 // Register new user
@@ -29,9 +34,16 @@ router.post('/signup', [
     .withMessage('Password must be at least 6 characters long')
 ], async (req, res) => {
   try {
+    console.log('🔗 Backend: Signup request received:', { 
+      name: req.body.name, 
+      email: req.body.email, 
+      password: '***' 
+    });
+    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Backend: Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -42,45 +54,118 @@ router.post('/signup', [
     const { name, email, password } = req.body;
 
     // Check if user already exists
-    const existingUser = await User.findByEmail(email);
+    const UserModel = getCurrentUserModel();
+    const existingUser = await UserModel.findByEmail(email);
     if (existingUser) {
+      console.log('❌ Backend: User already exists:', email);
       return res.status(400).json({
         success: false,
         message: 'User with this email already exists'
       });
     }
 
-    // Create new user
-    const user = new User({
-      name,
-      email,
-      password,
-      role: 'user'
-    });
+    console.log('✅ Backend: User does not exist, proceeding with creation');
 
-    await user.save();
+    // Check if we're using mock data
+    const isUsingMockData = global.MockUser !== undefined;
+    console.log('🔧 Backend: Using mock data:', isUsingMockData);
+    
+    if (isUsingMockData) {
+      // Create mock user
+      const mockUserId = 'user-' + Date.now();
+      const mockUser = {
+        _id: mockUserId,
+        name,
+        email: email.toLowerCase(),
+        password: password, // Store plain password for mock comparison
+        role: 'user',
+        isActive: true,
+        deletedAt: null,
+        lastLogin: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        
+        // Mock methods
+        comparePassword: async function(candidatePassword) {
+          return candidatePassword === this.password; // Compare with stored password
+        },
+        
+        save: async function() {
+          // Add to mock users array
+          global.mockUsers = global.mockUsers || [];
+          const index = global.mockUsers.findIndex(u => u._id === this._id);
+          if (index !== -1) {
+            global.mockUsers[index] = { ...this };
+          } else {
+            global.mockUsers.push({ ...this });
+          }
+          return this;
+        }
+      };
+      
+      // Add to mock users
+      global.mockUsers = global.mockUsers || [];
+      global.mockUsers.push(mockUser);
+      
+      // Generate token
+      const token = generateToken(mockUser._id);
+      
+      console.log('✅ Backend: Mock user created successfully:', {
+        id: mockUser._id,
+        email: mockUser.email,
+        name: mockUser.name
+      });
+      
+      res.status(201).json({
+        success: true,
+        message: 'User created successfully',
+        token,
+        user: {
+          id: mockUser._id,
+          name: mockUser.name,
+          email: mockUser.email,
+          role: mockUser.role
+        }
+      });
+    } else {
+      // Create new user with MongoDB
+      const user = new User({
+        name,
+        email,
+        password,
+        role: 'user'
+      });
 
-    // Generate token
-    const token = generateToken(user._id);
+      await user.save();
 
-    // Set last login
-    user.lastLogin = new Date();
-    await user.save();
+      // Generate token
+      const token = generateToken(user._id);
 
-    res.status(201).json({
-      success: true,
-      message: 'User created successfully',
-      token,
-      user: {
+      // Set last login
+      user.lastLogin = new Date();
+      await user.save();
+
+      console.log('✅ Backend: MongoDB user created successfully:', {
         id: user._id,
-        name: user.name,
         email: user.email,
-        role: user.role
-      }
-    });
+        name: user.name
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'User created successfully',
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      });
+    }
 
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error('❌ Backend: Signup error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error during registration'
@@ -112,7 +197,8 @@ router.post('/login', [
     const { email, password } = req.body;
 
     // Find user by email
-    const user = await User.findByEmail(email);
+    const UserModel = getCurrentUserModel();
+    const user = await UserModel.findByEmail(email);
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -183,7 +269,8 @@ router.get('/profile', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production');
     
     // Find user
-    const user = await User.findById(decoded.userId);
+    const UserModel = getCurrentUserModel();
+    const user = await UserModel.findById(decoded.userId);
     if (!user || !user.isActive || user.deletedAt) {
       return res.status(401).json({
         success: false,
@@ -250,7 +337,8 @@ router.put('/profile', [
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production');
     
     // Find user
-    const user = await User.findById(decoded.userId);
+    const UserModel = getCurrentUserModel();
+    const user = await UserModel.findById(decoded.userId);
     if (!user || !user.isActive || user.deletedAt) {
       return res.status(401).json({
         success: false,
@@ -262,7 +350,7 @@ router.put('/profile', [
 
     // Check if email already exists (if changing email)
     if (email && email !== user.email) {
-      const existingUser = await User.findByEmail(email);
+      const existingUser = await UserModel.findByEmail(email);
       if (existingUser) {
         return res.status(400).json({
           success: false,
@@ -332,7 +420,8 @@ router.put('/change-password', [
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production');
     
     // Find user
-    const user = await User.findById(decoded.userId);
+    const UserModel = getCurrentUserModel();
+    const user = await UserModel.findById(decoded.userId);
     if (!user || !user.isActive || user.deletedAt) {
       return res.status(401).json({
         success: false,
@@ -392,7 +481,8 @@ router.delete('/delete-account', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production');
     
     // Find and soft delete the user
-    const user = await User.findById(decoded.userId);
+    const UserModel = getCurrentUserModel();
+    const user = await UserModel.findById(decoded.userId);
     if (!user || !user.isActive || user.deletedAt) {
       return res.status(401).json({
         success: false,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,13 +24,19 @@ type SignupFormData = z.infer<typeof signupSchema>;
 
 interface SignupFormProps {
   onSwitchToLogin: () => void;
+  error?: string;
+  setError: (error: string) => void;
 }
 
-export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
+export function SignupForm({ onSwitchToLogin, error, setError }: SignupFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
   const { signup, isLoading } = useAuth();
+
+  // Debug error state changes
+  useEffect(() => {
+    console.log('📝 SignupForm: Error state changed to:', error);
+  }, [error]);
 
   const {
     register,
@@ -41,11 +47,21 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   });
 
   const onSubmit = async (data: SignupFormData) => {
+    console.log('📝 SignupForm: Form submitted with data:', { ...data, password: '***' });
+    console.log('📝 SignupForm: Current error state before clearing:', error);
     setError('');
+    console.log('📝 SignupForm: Error state cleared');
+    
+    console.log('📝 SignupForm: Calling signup function...');
     const result = await signup(data.name, data.email, data.password);
+    console.log('📝 SignupForm: Signup result:', result);
     
     if (!result.success) {
+      console.log('❌ SignupForm: Signup failed, setting error:', result.error);
       setError(result.error || 'Signup failed');
+      console.log('📝 SignupForm: Error state set to:', result.error);
+    } else {
+      console.log('✅ SignupForm: Signup successful, should redirect');
     }
   };
 
@@ -61,8 +77,10 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+          <Alert variant="destructive" className="border-2 border-red-500 bg-red-50 dark:bg-red-950">
+            <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 

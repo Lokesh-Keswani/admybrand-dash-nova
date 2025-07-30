@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { SignupForm } from '@/components/auth/SignupForm';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,9 +7,26 @@ import { Loader2 } from 'lucide-react';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const [authError, setAuthError] = useState('');
   const { isAuthenticated, isLoading } = useAuth();
 
-  console.log('🔍 AuthPage - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
+  // Debug authError state changes
+  useEffect(() => {
+    console.log('🔍 AuthPage: authError state changed to:', authError);
+  }, [authError]);
+
+  console.log('🔍 AuthPage - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading, 'authError:', authError);
+
+  // Clear error when switching between login and signup
+  const handleSwitchToLogin = () => {
+    setAuthError('');
+    setIsLogin(true);
+  };
+
+  const handleSwitchToSignup = () => {
+    setAuthError('');
+    setIsLogin(false);
+  };
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -47,9 +64,17 @@ export default function AuthPage() {
 
         {/* Form */}
         {isLogin ? (
-          <LoginForm onSwitchToSignup={() => setIsLogin(false)} />
+          <LoginForm 
+            onSwitchToSignup={handleSwitchToSignup} 
+            error={authError}
+            setError={setAuthError}
+          />
         ) : (
-          <SignupForm onSwitchToLogin={() => setIsLogin(true)} />
+          <SignupForm 
+            onSwitchToLogin={handleSwitchToLogin} 
+            error={authError}
+            setError={setAuthError}
+          />
         )}
 
         {/* Footer */}
