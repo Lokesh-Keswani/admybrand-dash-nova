@@ -82,6 +82,27 @@ userSchema.statics.findByEmailIncludingDeleted = function(email) {
   });
 };
 
-const User = mongoose.model('User', userSchema);
+// Check if we're using mock data
+const isUsingMockData = () => {
+  return global.MockUser !== undefined;
+};
 
-export default User; 
+// Create User model with fallback to mock data
+let User;
+try {
+  User = mongoose.model('User', userSchema);
+} catch (error) {
+  // Model already exists, get it
+  User = mongoose.model('User');
+}
+
+// Export User model with mock data fallback
+export default User;
+
+// Export a function that returns the appropriate User model
+export const getUserModel = () => {
+  if (isUsingMockData()) {
+    return global.MockUser;
+  }
+  return User;
+}; 
