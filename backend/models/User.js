@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
     lowercase: true,
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
@@ -36,6 +35,20 @@ const userSchema = new mongoose.Schema({
   },
   lastLogin: {
     type: Date
+  },
+  notificationPreferences: {
+    emailNotifications: {
+      type: Boolean,
+      default: true
+    },
+    pushNotifications: {
+      type: Boolean,
+      default: false
+    },
+    weeklyReports: {
+      type: Boolean,
+      default: true
+    }
   }
 }, {
   timestamps: true,
@@ -81,6 +94,15 @@ userSchema.statics.findByEmailIncludingDeleted = function(email) {
     email: email.toLowerCase()
   });
 };
+
+// Create compound unique index for email + deletedAt (only active users)
+userSchema.index(
+  { email: 1, deletedAt: 1 }, 
+  { 
+    unique: true, 
+    partialFilterExpression: { deletedAt: null }
+  }
+);
 
 // Check if we're using mock data
 const isUsingMockData = () => {

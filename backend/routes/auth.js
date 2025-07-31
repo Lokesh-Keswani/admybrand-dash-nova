@@ -46,21 +46,82 @@ router.post('/signup', [
 
     const { name, email, password } = req.body;
 
-    // Check if user already exists
+    // Check if user already exists (including soft-deleted users)
     const UserModel = getCurrentUserModel();
-    const existingUser = await UserModel.findByEmail(email);
+    const existingUser = await UserModel.findByEmailIncludingDeleted(email);
+    
     if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'User with this email already exists'
-      });
+      // If user exists but is soft-deleted, we can reactivate the account
+      if (existingUser.deletedAt) {
+        // Reactivate the soft-deleted account
+        existingUser.deletedAt = null;
+        existingUser.isActive = true;
+        existingUser.name = name;
+        existingUser.password = password; // This will be hashed by the pre-save hook
+        existingUser.lastLogin = new Date();
+        await existingUser.save();
+
+        // Generate token
+        const token = generateToken(existingUser._id);
+
+        res.status(200).json({
+          success: true,
+          message: 'Account reactivated successfully',
+          token,
+          user: {
+            id: existingUser._id,
+            name: existingUser.name,
+            email: existingUser.email,
+            role: existingUser.role
+          }
+        });
+        return;
+      } else {
+        // User exists and is active
+        return res.status(400).json({
+          success: false,
+          message: 'User with this email already exists'
+        });
+      }
     }
 
     // Check if we're using mock data
     const isUsingMockData = global.MockUser !== undefined;
     
     if (isUsingMockData) {
-      // Create mock user
+      // Check if there's a soft-deleted mock user with this email
+      global.mockUsers = global.mockUsers || [];
+      const softDeletedUser = global.mockUsers.find(u => 
+        u.email === email.toLowerCase() && u.deletedAt
+      );
+      
+      if (softDeletedUser) {
+        // Reactivate the soft-deleted mock user
+        softDeletedUser.deletedAt = null;
+        softDeletedUser.isActive = true;
+        softDeletedUser.name = name;
+        softDeletedUser.password = password;
+        softDeletedUser.lastLogin = new Date();
+        softDeletedUser.updatedAt = new Date();
+        
+        // Generate token
+        const token = generateToken(softDeletedUser._id);
+        
+        res.status(200).json({
+          success: true,
+          message: 'Account reactivated successfully',
+          token,
+          user: {
+            id: softDeletedUser._id,
+            name: softDeletedUser.name,
+            email: softDeletedUser.email,
+            role: softDeletedUser.role
+          }
+        });
+        return;
+      }
+      
+      // Create new mock user
       const mockUserId = 'user-' + Date.now();
       const mockUser = {
         _id: mockUserId,
@@ -93,7 +154,6 @@ router.post('/signup', [
       };
       
       // Add to mock users
-      global.mockUsers = global.mockUsers || [];
       global.mockUsers.push(mockUser);
       
       // Generate token
@@ -481,6 +541,104 @@ router.delete('/delete-account', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Server error during account deletion' 
+    });
+  }
+});
+
+// Get notification preferences
+router.get('/notification-preferences', async (req, res) => {
+  try {
+    // Get token from header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const token = authHeader.slice(7);
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production');
+    
+    // Find user
+    const UserModel = getCurrentUserModel();
+    const user = await UserModel.findById(decoded.userId);
+    if (!user || !user.isActive || user.deletedAt) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token or user not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user.notificationPreferences || {
+        emailNotifications: true,
+        pushNotifications: false,
+        weeklyReports: true
+      }
+    });
+
+  } catch (error) {
+    console.error('Get notification preferences error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching notification preferences'
+    });
+  }
+});
+
+// Update notification preferences
+router.put('/notification-preferences', async (req, res) => {
+  try {
+    // Get token from header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    const token = authHeader.slice(7);
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production');
+    
+    // Find user
+    const UserModel = getCurrentUserModel();
+    const user = await UserModel.findById(decoded.userId);
+    if (!user || !user.isActive || user.deletedAt) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token or user not found'
+      });
+    }
+
+    const { emailNotifications, pushNotifications, weeklyReports } = req.body;
+
+    // Update notification preferences
+    user.notificationPreferences = {
+      emailNotifications: emailNotifications !== undefined ? emailNotifications : user.notificationPreferences?.emailNotifications ?? true,
+      pushNotifications: pushNotifications !== undefined ? pushNotifications : user.notificationPreferences?.pushNotifications ?? false,
+      weeklyReports: weeklyReports !== undefined ? weeklyReports : user.notificationPreferences?.weeklyReports ?? true
+    };
+
+    await user.save();
+
+    res.json({
+      success: true,
+      data: user.notificationPreferences,
+      message: 'Notification preferences updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Update notification preferences error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating notification preferences'
     });
   }
 });

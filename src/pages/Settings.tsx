@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Settings as SettingsIcon, Bell, Shield, User, Loader2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
+import { userSettingsAPI } from "@/services/api"
 import { useState, useEffect } from "react"
 
 export default function Settings() {
@@ -28,6 +29,26 @@ export default function Settings() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
   const [weeklyReports, setWeeklyReports] = useState(true);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+
+  // Load notification preferences on component mount
+  useEffect(() => {
+    const loadNotificationPreferences = async () => {
+      try {
+        const response = await userSettingsAPI.getNotificationPreferences();
+        if (response.success) {
+          setEmailNotifications(response.data.emailNotifications);
+          setPushNotifications(response.data.pushNotifications);
+          setWeeklyReports(response.data.weeklyReports);
+        }
+      } catch (error) {
+        console.error('Failed to load notification preferences:', error);
+        // Keep default values if loading fails
+      }
+    };
+
+    loadNotificationPreferences();
+  }, []);
 
   // Update form values when user data changes
   useEffect(() => {
@@ -107,6 +128,47 @@ export default function Settings() {
       });
     }
   };
+
+  // Handle notification preference changes
+  const handleNotificationChange = async (type: 'emailNotifications' | 'pushNotifications' | 'weeklyReports', value: boolean) => {
+    setNotificationLoading(true);
+    
+    try {
+      const preferences = {
+        [type]: value
+      };
+      
+      const response = await userSettingsAPI.updateNotificationPreferences(preferences);
+      
+      if (response.success) {
+        // Update local state with the response data
+        setEmailNotifications(response.data.emailNotifications);
+        setPushNotifications(response.data.pushNotifications);
+        setWeeklyReports(response.data.weeklyReports);
+        
+        toast({
+          title: "Preferences Updated",
+          description: "Your notification preferences have been saved.",
+        });
+      } else {
+        toast({
+          title: "Update Failed",
+          description: response.error || "Failed to update notification preferences.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update notification preferences:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update notification preferences. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setNotificationLoading(false);
+    }
+  };
+
   return (
     <div className="flex-1 space-y-6 p-6">
       <div>
@@ -190,7 +252,8 @@ export default function Settings() {
               <Switch 
                 id="email-notifications" 
                 checked={emailNotifications}
-                onCheckedChange={setEmailNotifications}
+                onCheckedChange={(value) => handleNotificationChange('emailNotifications', value)}
+                disabled={notificationLoading}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -201,7 +264,8 @@ export default function Settings() {
               <Switch 
                 id="push-notifications" 
                 checked={pushNotifications}
-                onCheckedChange={setPushNotifications}
+                onCheckedChange={(value) => handleNotificationChange('pushNotifications', value)}
+                disabled={notificationLoading}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -212,7 +276,8 @@ export default function Settings() {
               <Switch 
                 id="weekly-reports" 
                 checked={weeklyReports}
-                onCheckedChange={setWeeklyReports}
+                onCheckedChange={(value) => handleNotificationChange('weeklyReports', value)}
+                disabled={notificationLoading}
               />
             </div>
           </CardContent>

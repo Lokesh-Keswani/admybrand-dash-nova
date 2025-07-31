@@ -68,13 +68,23 @@ export interface TrafficSource {
 // Generic API request function
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
   try {
+    // Get auth token from localStorage
+    const token = localStorage.getItem('admybrand_token');
+    
+    const headers = {
+      ...defaultOptions.headers,
+      ...options.headers,
+    } as Record<string, string>;
+
+    // Add authorization header if token exists
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...defaultOptions,
       ...options,
-      headers: {
-        ...defaultOptions.headers,
-        ...options.headers,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -333,4 +343,28 @@ export const exportAPI = {
 export const healthAPI = {
   checkHealth: (): Promise<any> =>
     fetch(`${API_BASE_URL.replace('/api', '')}/health`).then(r => r.json()),
+};
+
+// User Settings API
+export const userSettingsAPI = {
+  // Get notification preferences
+  getNotificationPreferences: (): Promise<ApiResponse<{
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    weeklyReports: boolean;
+  }>> => apiRequest('/auth/notification-preferences'),
+
+  // Update notification preferences
+  updateNotificationPreferences: (preferences: {
+    emailNotifications?: boolean;
+    pushNotifications?: boolean;
+    weeklyReports?: boolean;
+  }): Promise<ApiResponse<{
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    weeklyReports: boolean;
+  }>> => apiRequest('/auth/notification-preferences', {
+    method: 'PUT',
+    body: JSON.stringify(preferences),
+  }),
 }; 
