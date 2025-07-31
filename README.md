@@ -64,38 +64,149 @@ A modern, full-stack analytics dashboard for digital marketing agencies built wi
 ## 📁 **Project Structure**
 
 ```
-ADmyBRAND/
-├── admybrand-dash-nova/          # Frontend (React + TypeScript)
-│   ├── src/
-│   │   ├── components/           # UI Components
-│   │   │   ├── ui/              # shadcn/ui components
-│   │   │   ├── Dashboard.tsx    # Main dashboard
-│   │   │   ├── MetricCard.tsx   # KPI metric cards
-│   │   │   └── ...
-│   │   ├── pages/               # Page components
-│   │   │   ├── Index.tsx        # Dashboard page
-│   │   │   ├── Campaigns.tsx    # Campaign management
-│   │   │   ├── Reports.tsx      # Reports page
-│   │   │   └── Settings.tsx     # Settings page
-│   │   ├── services/            # API & WebSocket services
-│   │   │   ├── api.ts          # REST API client
-│   │   │   └── websocket.ts    # WebSocket service
-│   │   └── hooks/              # Custom React hooks
+admybrand-dash-nova/
+├── .git/
+├── .env
+├── .env.local
+├── .env.production
+├── .gitignore
+├── README.md
+├── bun.lockb
+├── components.json
+├── eslint.config.js
+├── index.html
+├── netlify.toml
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── start-servers-debug.bat
+├── start-servers-with-mongo.bat
+├── start-servers.bat
+├── tailwind.config.ts
+├── test-account-reactivation.js
+├── test-connection.html
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+├── vercel.json
+├── vite.config.ts
+├── backend/
+│   ├── .env
+│   ├── .env.local
+│   ├── .gitignore
+│   ├── package-lock.json
 │   ├── package.json
-│   └── ...
-└── backend/                      # Backend (Node.js + Express)
-    ├── routes/                   # API routes
-    │   ├── analytics.js         # Analytics endpoints
-    │   ├── campaigns.js         # Campaign endpoints
-    │   ├── reports.js           # Reports endpoints
-    │   └── export.js            # Export endpoints
-    ├── services/                 # Business logic
-    │   └── realTimeService.js   # WebSocket service
-    ├── data/                     # Mock data
-    │   └── mockDatabase.js      # Realistic sample data
-    ├── server.js                # Main server file
-    ├── package.json
-    └── .env                      # Environment variables
+│   ├── render.yaml
+│   ├── server.js
+│   ├── test-mongo.js
+│   ├── config/
+│   │   └── database.js
+│   ├── data/
+│   │   └── mockDatabase.js
+│   ├── models/
+│   │   └── User.js
+│   ├── node_modules/
+│   ├── routes/
+│   │   ├── analytics.js
+│   │   ├── auth.js
+│   │   ├── campaigns.js
+│   │   ├── export.js
+│   │   └── reports.js
+│   └── services/
+│       └── realTimeService.js
+├── node_modules/
+├── public/
+│   ├── favicon.ico
+│   ├── placeholder.svg
+│   └── robots.txt
+└── src/
+    ├── App.tsx
+    ├── index.css
+    ├── main.tsx
+    ├── vite-env.d.ts
+    ├── components/
+    │   ├── AppSidebar.tsx
+    │   ├── Dashboard.tsx
+    │   ├── MetricCard.tsx
+    │   ├── Navbar.tsx
+    │   ├── ThemeProvider.tsx
+    │   ├── ThemeToggle.tsx
+    │   ├── auth/
+    │   │   ├── LoginForm.tsx
+    │   │   ├── ProtectedRoute.tsx
+    │   │   └── SignupForm.tsx
+    │   ├── charts/
+    │   │   ├── AnalyticsCharts.tsx
+    │   │   ├── ConversionsChart.tsx
+    │   │   ├── RevenueChart.tsx
+    │   │   └── TrafficSourcesChart.tsx
+    │   └── ui/
+    │       ├── accordion.tsx
+    │       ├── alert.tsx
+    │       ├── alert-dialog.tsx
+    │       ├── aspect-ratio.tsx
+    │       ├── avatar.tsx
+    │       ├── badge.tsx
+    │       ├── breadcrumb.tsx
+    │       ├── button.tsx
+    │       ├── calendar.tsx
+    │       ├── card.tsx
+    │       ├── carousel.tsx
+    │       ├── chart.tsx
+    │       ├── checkbox.tsx
+    │       ├── collapsible.tsx
+    │       ├── command.tsx
+    │       ├── context-menu.tsx
+    │       ├── dialog.tsx
+    │       ├── drawer.tsx
+    │       ├── dropdown-menu.tsx
+    │       ├── form.tsx
+    │       ├── hover-card.tsx
+    │       ├── input-otp.tsx
+    │       ├── input.tsx
+    │       ├── label.tsx
+    │       ├── menubar.tsx
+    │       ├── navigation-menu.tsx
+    │       ├── pagination.tsx
+    │       ├── popover.tsx
+    │       ├── progress.tsx
+    │       ├── radio-group.tsx
+    │       ├── resizable.tsx
+    │       ├── scroll-area.tsx
+    │       ├── select.tsx
+    │       ├── separator.tsx
+    │       ├── sheet.tsx
+    │       ├── sidebar.tsx
+    │       ├── skeleton.tsx
+    │       ├── slider.tsx
+    │       ├── sonner.tsx
+    │       ├── switch.tsx
+    │       ├── table.tsx
+    │       ├── tabs.tsx
+    │       ├── textarea.tsx
+    │       ├── toast.tsx
+    │       ├── toaster.tsx
+    │       ├── toggle.tsx
+    │       ├── toggle-group.tsx
+    │       └── tooltip.tsx
+    ├── contexts/
+    │   └── AuthContext.tsx
+    ├── hooks/
+    │   ├── use-mobile.tsx
+    │   └── use-toast.ts
+    ├── lib/
+    │   └── utils.ts
+    ├── pages/
+    │   ├── Analytics.tsx
+    │   ├── AuthPage.tsx
+    │   ├── Campaigns.tsx
+    │   ├── Index.tsx
+    │   ├── NotFound.tsx
+    │   ├── Reports.tsx
+    │   └── Settings.tsx
+    └── services/
+        ├── api.ts
+        └── websocket.ts
 ```
 
 ## 🚀 **Getting Started**
@@ -139,10 +250,10 @@ ADmyBRAND/
    cd admybrand-dash-nova
    npm run dev
    ```
-   Frontend will run on: `http://localhost:8080`
+   Frontend will run on: `http://localhost:5174`
 
 3. **Access the Application**
-   Open your browser and navigate to `http://localhost:8080`
+   Open your browser and navigate to `http://localhost:5174`
 
 ## 📊 **API Endpoints**
 
@@ -228,11 +339,12 @@ ADmyBRAND/
 
 **Backend (.env)**
 ```env
-PORT=3001
+FRONTEND_URL=http://localhost:5174
+JWT_EXPIRE=7d
+JWT_SECRET=your_jwt_secret_key
+MONGODB_URI="mongodb+srv://keswani399:270778eshnali@cluster0.fvmbrtz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 NODE_ENV=development
-FRONTEND_URL=http://localhost:8080
-RATE_LIMIT_WINDOW=15
-RATE_LIMIT_MAX_REQUESTS=1000
+PORT=10000
 ```
 
 ## 📈 **Performance**
